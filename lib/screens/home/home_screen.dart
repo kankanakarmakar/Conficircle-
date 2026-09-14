@@ -16,6 +16,7 @@ import 'widgets/tools_for_you.dart';
 import 'widgets/do_you_know.dart';
 import 'widgets/share_earn_section.dart';
 import 'widgets/current_situation.dart';
+import 'widgets/topic_grid_section.dart';
 import 'widgets/recommended_programs.dart';
 import 'widgets/because_you_explored.dart';
 import 'widgets/others_like_you.dart';
@@ -128,49 +129,32 @@ class _HomeScreenState extends State<HomeScreen> {
                   // 1. Greeting
                   GreetingHeader(user: user, isFirst: false),
 
-                  // 2. Current Situation
+                  // 2. ConfiZone card — CS, CL, focus areas, Reassess Confi
                   const CurrentSituationSection(),
 
-                  // 3. Six action cards
-                  const ActionCardGrid(),
+                  // 3. Six random topic cards → each opens TopicDetailScreen
+                  const TopicGridSection(),
 
-                  // 4. Explore More
-                  const ExploreMoreButton(),
-
-                  // 5. Just Curious
-                  const JustCuriousSection(),
-
-                  // 6. Something useful for you
-                  const UsefulContentSection(),
-
-                  // 7. Recommended Programs
-                  const RecommendedProgramsSection(),
-
-                  // 8. Others Like You
-                  const OthersLikeYouSection(),
-
-                  // 9. Real Students
-                  const RealStudentsSection(),
-
-                  // 10. Explore Life Journey
-                  const ExploreLifeJourneySection(),
-
-                  // 11. Tools for You
-                  const ToolsForYouSection(),
-
-                  // 12. Do You Know?
+                  // 4. Did You Know? (scrollable fact cards)
                   const DoYouKnowSection(),
 
-                  // 13. Because you explored
+                  // 5. Something useful for you
+                  const UsefulContentSection(),
+
+                  // 6. Just Curious quick picks
+                  const JustCuriousSection(),
+
+                  // 7. Because you explored
                   const BecauseYouExploredSection(),
 
-                  // 14. Share & Earn
+                  // 8. Share & Earn
                   const ShareEarnSection(),
 
                   const SizedBox(height: 32),
                 ],
               ),
             ),
+
         ],
       ),
     );
