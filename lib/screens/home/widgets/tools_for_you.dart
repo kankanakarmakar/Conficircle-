@@ -24,7 +24,7 @@ class ToolsForYouSection extends StatelessWidget {
         children: [
           SectionHeader(title: 'Tools for You', onMore: () {}),
           SizedBox(
-            height: 110,
+            height: 140,
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               scrollDirection: Axis.horizontal,
@@ -57,8 +57,8 @@ class _ToolCard extends StatelessWidget {
     return GestureDetector(
       onTap: () {},
       child: Container(
-        width: 120,
-        padding: const EdgeInsets.all(14),
+        width: 130,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
         decoration: BoxDecoration(
           color: color.withOpacity(0.08),
           borderRadius: BorderRadius.circular(18),
@@ -67,18 +67,21 @@ class _ToolCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 28)),
+            Text(emoji, style: const TextStyle(fontSize: 26)),
             const SizedBox(height: 6),
             Text(title,
                 textAlign: TextAlign.center,
+                maxLines: 2,
                 style: AppTypography.montserrat(
                   fontSize: 11, fontWeight: FontWeight.w700, color: color,
                 )),
             const SizedBox(height: 3),
-            Text(desc,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                style: AppTypography.bodySmall.copyWith(fontSize: 9)),
+            Expanded(
+              child: Text(desc,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  style: AppTypography.bodySmall.copyWith(fontSize: 9)),
+            ),
           ],
         ),
       ),

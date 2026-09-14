@@ -41,12 +41,13 @@ class _ConfiZoneMainScreenState extends State<ConfiZoneMainScreen>
         headerSliverBuilder: (context, _) => [
           SliverAppBar(
             pinned: true,
+            floating: true, // Allows it to appear immediately when scrolling up
             backgroundColor: AppColors.white,
             elevation: 0,
             title: Text('ConfiZone', style: AppTypography.headingSmall),
             centerTitle: false,
             bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(116),
+              preferredSize: const Size.fromHeight(156),
               child: Column(
                 children: [
                   // Fixed search bar

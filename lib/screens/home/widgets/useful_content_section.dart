@@ -21,7 +21,7 @@ class UsefulContentSection extends StatelessWidget {
         children: [
           SectionHeader(title: 'Something useful for you', onMore: () {}),
           SizedBox(
-            height: 120,
+            height: 145,
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               scrollDirection: Axis.horizontal,

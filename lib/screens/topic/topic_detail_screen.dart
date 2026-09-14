@@ -15,56 +15,76 @@ class TopicDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.softGrey,
-      body: CustomScrollView(
-        slivers: [
-          // ── Header ──────────────────────────────────────────────
-          SliverAppBar(
-            expandedHeight: 180,
-            pinned: true,
-            backgroundColor: topicColor,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-              onPressed: () => Navigator.pop(context),
+      body: Column(
+        children: [
+          // ── Fixed gradient header ────────────────────────────────
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [topicColor, topicColor.withOpacity(0.82)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
             ),
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [topicColor, topicColor.withOpacity(0.75)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 56, 24, 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text(topic.emoji, style: const TextStyle(fontSize: 42)),
-                        const SizedBox(height: 8),
-                        Text(topic.title,
-                            style: AppTypography.montserrat(
-                              fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white,
-                            )),
-                        Text(topic.subtitle,
-                            style: AppTypography.montserrat(
-                              fontSize: 13, fontWeight: FontWeight.w500,
-                              color: Colors.white.withOpacity(0.75),
-                            )),
-                      ],
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Back button row
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 20),
+                    // Emoji + title + subtitle
+                    Text(topic.emoji, style: const TextStyle(fontSize: 44)),
+                    const SizedBox(height: 8),
+                    Text(
+                      topic.title,
+                      style: AppTypography.montserrat(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      topic.subtitle,
+                      style: AppTypography.montserrat(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withOpacity(0.75),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
 
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          // ── Scrollable body ──────────────────────────────────────
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+
                 const SizedBox(height: 20),
 
                 // ── Quick Tips ─────────────────────────────────────
@@ -88,11 +108,13 @@ class TopicDetailScreen extends StatelessWidget {
               ],
             ),
           ),
+        ),
         ],
       ),
     );
   }
 }
+
 
 // ─────────────────────────────────────────────────────────────
 // Section label

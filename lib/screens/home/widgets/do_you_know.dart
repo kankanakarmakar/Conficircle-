@@ -21,7 +21,7 @@ class DoYouKnowSection extends StatelessWidget {
         children: [
           SectionHeader(title: 'Do You Know?', onMore: () {}),
           SizedBox(
-            height: 140,
+            height: 170,
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               scrollDirection: Axis.horizontal,

@@ -135,10 +135,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   // 3. Six random topic cards → each opens TopicDetailScreen
                   const TopicGridSection(),
 
-                  // 4. Did You Know? (scrollable fact cards)
+                  // 4. Tools for You
+                  const ToolsForYouSection(),
+
+                  // 5. Did You Know? (scrollable fact cards)
                   const DoYouKnowSection(),
 
-                  // 5. Something useful for you
+                  // 6. Something useful for you
                   const UsefulContentSection(),
 
                   // 6. Just Curious quick picks

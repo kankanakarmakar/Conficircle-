@@ -36,7 +36,7 @@ class JustCuriousSection extends StatelessWidget {
             onMore: () {},
           ),
           SizedBox(
-            height: 130,
+            height: 155,
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               scrollDirection: Axis.horizontal,
