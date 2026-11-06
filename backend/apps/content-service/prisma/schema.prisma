@@ -1,0 +1,137 @@
+// ==========================================================================
+// DRAFT SCHEMA — NOT APPROVED FOR PRODUCTION MIGRATIONS (Phase 5)
+//
+// The original ConfCircle DBML schema was not present in the repository
+// (see backend/docs/decisions/0001-sourcing-models.md). These models are
+// a minimal draft derived from the content service's stated
+// responsibilities. They MUST be reconciled with the approved data model
+// before running `prisma migrate`.
+// ==========================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum DifficultyLevel {
+  beginner
+  intermediate
+  advanced
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("CONTENT_DATABASE_URL")
+}
+
+model Topic {
+  id               String          @id @default(uuid()) @db.Uuid
+  title            String
+  description      String?
+  difficultyLevel  DifficultyLevel @default(beginner)
+  orderIndex       Int
+  isPublished      Boolean         @default(false)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  questions         Question[]
+  quickTips         QuickTip[]
+  videoResources    VideoResource[]
+  learningResources LearningResource[]
+
+  @@index([isPublished, orderIndex])
+  @@index([difficultyLevel])
+}
+
+model Question {
+  id              String          @id @default(uuid()) @db.Uuid
+  topicId         String          @db.Uuid
+  prompt          String
+  difficultyLevel DifficultyLevel @default(beginner)
+  orderIndex      Int
+  isPublished     Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  topic   Topic            @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  options QuestionOption[]
+
+  @@index([topicId, orderIndex])
+  @@index([difficultyLevel])
+}
+
+model QuestionOption {
+  id         String  @id @default(uuid()) @db.Uuid
+  questionId String  @db.Uuid
+  text       String
+  orderIndex Int
+  // Correctness data lives ONLY inside the service databases; it must
+  // never leave the server through public APIs (Phase 3 rule).
+  isCorrect  Boolean @default(false)
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId, orderIndex])
+}
+
+model QuickTip {
+  id          String   @id @default(uuid()) @db.Uuid
+  topicId     String?  @db.Uuid
+  content     String
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  topic Topic? @relation(fields: [topicId], references: [id], onDelete: SetNull)
+
+  @@index([topicId])
+}
+
+model VideoResource {
+  id              String   @id @default(uuid()) @db.Uuid
+  topicId         String   @db.Uuid
+  title           String
+  url             String
+  durationSeconds Int?
+  isPublished     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@index([topicId])
+}
+
+model LearningResource {
+  id        String   @id @default(uuid()) @db.Uuid
+  topicId   String   @db.Uuid
+  title     String
+  url       String
+  type      String   // article | exercise | reference (to be finalized)
+  createdAt DateTime @default(now())
+
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@index([topicId])
+}
+
+// Topic-related event: content publication management
+model ContentPublication {
+  id        String    @id @default(uuid()) @db.Uuid
+  topicId   String    @db.Uuid
+  status    String    // draft | in_review | published | archived (to be finalized)
+  publishedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([topicId, status])
+}
+
+// Transactional outbox (Phase 6) — events tied to DB writes are recorded
+// in the same transaction, then relayed by the publisher.
+model OutboxEvent {
+  id           String    @id @default(uuid()) @db.Uuid
+  eventType    String
+  routingKey   String
+  payload      Json
+  processedAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([processedAt])
+}

@@ -1,0 +1,114 @@
+// ==========================================================================
+// DRAFT SCHEMA — NOT APPROVED FOR PRODUCTION MIGRATIONS (Phase 5)
+//
+// The original ConfCircle DBML schema was not present in the repository
+// (see backend/docs/decisions/0001-sourcing-models.md). These models are
+// a minimal draft derived from the assessment service's stated
+// responsibilities. They MUST be reconciled with the approved data model
+// before running `prisma migrate`.
+//
+// userId is a plain UUID reference (no cross-service FK) — the identity
+// service owns users. Ownership/authorization are enforced in the
+// application layer (Phase 8 rule).
+// ==========================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum DifficultyLevel {
+  beginner
+  intermediate
+  advanced
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("ASSESSMENT_DATABASE_URL")
+}
+
+model Assessment {
+  id              String          @id @default(uuid()) @db.Uuid
+  title           String
+  description     String?
+  difficultyLevel DifficultyLevel @default(beginner)
+  isPublished     Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  questions AssessmentQuestion[]
+  attempts  AssessmentAttempt[]
+
+  @@index([isPublished])
+}
+
+model AssessmentQuestion {
+  id           String  @id @default(uuid()) @db.Uuid
+  assessmentId String  @db.Uuid
+  prompt       String
+  orderIndex   Int
+
+  assessment Assessment        @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  options    AssessmentOption[]
+  responses  AttemptResponse[]
+
+  @@index([assessmentId, orderIndex])
+}
+
+model AssessmentOption {
+  id         String  @id @default(uuid()) @db.Uuid
+  questionId String  @db.Uuid
+  text       String
+  orderIndex Int
+  // Private scoring data — never exposed through public APIs (Phase 3).
+  isCorrect  Boolean @default(false)
+
+  question AssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId, orderIndex])
+}
+
+model AssessmentAttempt {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @db.Uuid
+  assessmentId String    @db.Uuid
+  startedAt    DateTime  @default(now())
+  completedAt  DateTime?
+  score        Int?
+
+  assessment Assessment      @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  responses  AttemptResponse[]
+  outboxEvents OutboxEvent[]
+
+  @@index([userId, assessmentId])
+  @@unique([userId, assessmentId, startedAt])
+}
+
+model AttemptResponse {
+  id               String   @id @default(uuid()) @db.Uuid
+  attemptId        String   @db.Uuid
+  questionId       String   @db.Uuid
+  selectedOptionId String   @db.Uuid
+  respondedAt      DateTime @default(now())
+
+  attempt  AssessmentAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question AssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([attemptId])
+}
+
+// Transactional outbox (Phase 6) — assessment-completed events are
+// recorded in the same transaction as the attempt, then relayed.
+model OutboxEvent {
+  id           String    @id @default(uuid()) @db.Uuid
+  attemptId    String    @db.Uuid
+  eventType    String
+  routingKey   String
+  payload      Json
+  processedAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  attempt AssessmentAttempt @relation(fields: [attemptId], references: [id])
+
+  @@index([processedAt])
+}
