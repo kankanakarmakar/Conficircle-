@@ -1,0 +1,85 @@
+// ==========================================================================
+// DRAFT SCHEMA — NOT APPROVED FOR PRODUCTION MIGRATIONS (Phase 5)
+//
+// The original ConfCircle DBML schema was not present in the repository
+// (see backend/docs/decisions/0001-sourcing-models.md). These models are
+// a minimal draft derived from the identity service's stated
+// responsibilities. They MUST be reconciled with the approved data model
+// before running `prisma migrate`. Model names are kept adjustable.
+// ==========================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("IDENTITY_DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String
+  displayName  String
+  role         Role     @default(user)
+  isGuest      Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  refreshSessions RefreshSession[]
+
+  @@index([createdAt])
+}
+
+model RefreshSession {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @db.Uuid
+  refreshTokenHash String  @unique
+  userAgent       String?
+  ipAddress       String?
+  revokedAt       DateTime?
+  rotatedAt       DateTime?
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+enum Role {
+  user
+  admin
+}
+
+// Transactional outbox (Phase 6) — events tied to DB writes are recorded
+// in the same transaction, then relayed by the publisher.
+model OutboxEvent {
+  id           String    @id @default(uuid()) @db.Uuid
+  eventType    String
+  routingKey   String
+  payload      Json
+  processedAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([processedAt])
+}
+
+model GuestSession {
+  id           String    @id @default(uuid()) @db.Uuid
+  // Anonymous owner of a guest session. Promoted to a real user on
+  // guest-to-registered conversion, so this does not reference User.
+  anonymousId  String    @unique
+  quotaLimit   Int       @default(10)
+  quotaUsed    Int       @default(0)
+  expiresAt    DateTime
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  convertedAt  DateTime?
+  convertedTo  String?   @db.Uuid
+
+  @@index([expiresAt])
+}
