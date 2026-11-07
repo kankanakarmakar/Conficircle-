@@ -43,3 +43,13 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+
+# Node / NestJS
+**/node_modules/
+**/dist/
+.env
+
+# Android build outputs
+android/build/
+**/android/app/build/

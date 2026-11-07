@@ -1,0 +1,759 @@
+// ===========================================================================
+// ConfCircle — Unified Prisma Schema
+// All models from spec §4. Single schema for monolith approach.
+// ===========================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===========================================================================
+// IDENTITY
+// ===========================================================================
+
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  email        String?    @unique
+  phone        String?    @unique
+  passwordHash String?
+  providerType ProviderType @default(local)
+  providerId   String?
+  role         UserRole   @default(user)
+  status       UserStatus @default(active)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  profile              Profile?
+  refreshSessions      RefreshSession[]
+  assessmentAttempts   AssessmentAttempt[]
+  activityEvents       ActivityEvent[]
+  topicProgress        TopicProgress[]
+  videoProgress        VideoProgress[]
+  confyPoints          ConfyPointsLedger[]
+  resourceEvents       ResourceEvent[]
+  groupMemberships     GroupMembership[]
+  posts                Post[]
+  auditEvents          AuditEvent[]
+  enrolments           Enrolment[]
+  courseProgress       CourseProgress[]
+  deadlines            Deadline[]
+  notificationSchedules NotificationSchedule[]
+  notificationDeliveries NotificationDelivery[]
+  guestMigrations      GuestMigration[]
+
+  @@index([email])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum ProviderType {
+  local
+  google
+  apple
+}
+
+enum UserRole {
+  user
+  moderator
+  admin
+}
+
+enum UserStatus {
+  active
+  suspended
+  deleted
+}
+
+model Profile {
+  id                        String   @id @default(uuid()) @db.Uuid
+  userId                    String   @unique @db.Uuid
+  name                      String
+  avatarUrl                 String?
+  preferences               Json     @default("{}")
+  notificationConsentEmail  Boolean  @default(true)
+  notificationConsentWhatsapp Boolean @default(false)
+  contactEmail              String?
+  contactPhone              String?
+  optOutEmail               Boolean  @default(false)
+  optOutWhatsapp            Boolean  @default(false)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model RefreshSession {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @db.Uuid
+  refreshTokenHash String    @unique
+  userAgent        String?
+  ipAddress        String?
+  revokedAt        DateTime?
+  expiresAt        DateTime
+  createdAt        DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ===========================================================================
+// CONTENT
+// ===========================================================================
+
+model Category {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  slug      String   @unique
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  topics Topic[]
+
+  @@index([slug])
+  @@index([order])
+}
+
+model Level {
+  id          String  @id @default(uuid()) @db.Uuid
+  name        String  @unique
+  order       Int
+  description String?
+
+  topics    Topic[]
+  questions Question[]
+}
+
+model Topic {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String
+  slug        String   @unique
+  categoryId  String   @db.Uuid
+  levelId     String   @db.Uuid
+  order       Int      @default(0)
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category       Category        @relation(fields: [categoryId], references: [id])
+  level          Level           @relation(fields: [levelId], references: [id])
+  quickTips      QuickTip[]
+  videoSolutions VideoSolution[]
+  questions      Question[]
+  assessments    Assessment[]
+  topicProgress  TopicProgress[]
+
+  @@index([categoryId])
+  @@index([levelId])
+  @@index([published])
+  @@index([slug])
+}
+
+model QuickTip {
+  id        String   @id @default(uuid()) @db.Uuid
+  topicId   String   @db.Uuid
+  content   String
+  order     Int      @default(0)
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@index([topicId])
+  @@index([published])
+}
+
+model VideoSolution {
+  id         String   @id @default(uuid()) @db.Uuid
+  topicId    String   @db.Uuid
+  title      String
+  storageKey String
+  durationSec Int
+  metadata   Json     @default("{}")
+  published  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  topic         Topic           @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  videoProgress VideoProgress[]
+
+  @@index([topicId])
+  @@index([published])
+}
+
+// ===========================================================================
+// ASSESSMENT
+// ===========================================================================
+
+model Question {
+  id               String   @id @default(uuid()) @db.Uuid
+  levelId          String   @db.Uuid
+  topicId          String?  @db.Uuid
+  content          String
+  eligibleForGuest Boolean  @default(false)
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+
+  level               Level                @relation(fields: [levelId], references: [id])
+  topic               Topic?               @relation(fields: [topicId], references: [id])
+  assessmentQuestions AssessmentQuestion[]
+  options             AssessmentOption[]
+  attemptAnswers      AttemptAnswer[]
+
+  @@index([levelId])
+  @@index([topicId])
+  @@index([eligibleForGuest])
+  @@index([active])
+}
+
+model Assessment {
+  id           String   @id @default(uuid()) @db.Uuid
+  topicId      String   @db.Uuid
+  title        String
+  timerSec     Int      @default(300)
+  maxAttempts  Int      @default(3)
+  scoringRules Json     @default("{}")
+  published    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  topic    Topic                @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  questions AssessmentQuestion[]
+  attempts  AssessmentAttempt[]
+
+  @@index([topicId])
+  @@index([published])
+}
+
+model AssessmentQuestion {
+  id           String @id @default(uuid()) @db.Uuid
+  assessmentId String @db.Uuid
+  questionId   String @db.Uuid
+  order        Int    @default(0)
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  question   Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([assessmentId, questionId])
+  @@index([assessmentId])
+}
+
+model AssessmentOption {
+  id         String  @id @default(uuid()) @db.Uuid
+  questionId String  @db.Uuid
+  content    String
+  isCorrect  Boolean @default(false) // NEVER sent to client
+
+  question       Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  attemptAnswers AttemptAnswer[]
+
+  @@index([questionId])
+}
+
+model AssessmentAttempt {
+  id           String        @id @default(uuid()) @db.Uuid
+  userId       String        @db.Uuid
+  assessmentId String        @db.Uuid
+  state        AttemptState  @default(draft)
+  startedAt    DateTime      @default(now())
+  submittedAt  DateTime?
+  expiresAt    DateTime
+  score        Int?
+  status       AttemptStatus?
+  createdAt    DateTime      @default(now())
+
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assessment Assessment      @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  answers    AttemptAnswer[]
+
+  @@index([userId])
+  @@index([assessmentId])
+  @@index([state])
+  @@index([expiresAt])
+}
+
+enum AttemptState {
+  draft
+  submitted
+  expired
+  scored
+}
+
+enum AttemptStatus {
+  pass
+  fail
+  incomplete
+}
+
+model AttemptAnswer {
+  id               String   @id @default(uuid()) @db.Uuid
+  attemptId        String   @db.Uuid
+  questionId       String   @db.Uuid
+  selectedOptionId String?  @db.Uuid
+  answeredAt       DateTime @default(now())
+
+  attempt        AssessmentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question       Question          @relation(fields: [questionId], references: [id])
+  selectedOption AssessmentOption? @relation(fields: [selectedOptionId], references: [id])
+
+  @@unique([attemptId, questionId])
+  @@index([attemptId])
+}
+
+// ===========================================================================
+// PROGRESS & ACTIVITY
+// ===========================================================================
+
+model ActivityEvent {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @db.Uuid
+  type          String
+  refId         String?
+  payload       Json     @default("{}")
+  sourceEventId String   @unique // Enforces migration idempotency
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model TopicProgress {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @db.Uuid
+  topicId         String   @db.Uuid
+  quickTipsViewed Int      @default(0)
+  videosCompleted Int      @default(0)
+  assessmentsDone Int      @default(0)
+  percentComplete Int      @default(0)
+  updatedAt       DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, topicId])
+  @@index([userId])
+  @@index([topicId])
+}
+
+model VideoProgress {
+  id              String    @id @default(uuid()) @db.Uuid
+  userId          String    @db.Uuid
+  videoId         String    @db.Uuid
+  lastPositionSec Int       @default(0)
+  completed       Boolean   @default(false)
+  completedAt     DateTime?
+  updatedAt       DateTime  @updatedAt
+
+  user  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video VideoSolution @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, videoId])
+  @@index([userId])
+  @@index([videoId])
+}
+
+// ===========================================================================
+// CONFY POINTS & LEVELS
+// ===========================================================================
+
+model ConfyLevel {
+  id                 String @id @default(uuid()) @db.Uuid
+  name               String
+  minPoints          Int
+  maxPoints          Int?
+  quickActionsConfig Json   @default("[]")
+  order              Int
+}
+
+model ConfyPointsLedger {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @db.Uuid
+  delta       Int
+  reason      String
+  refEventId  String   @unique // Prevents double-award
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ===========================================================================
+// RESOURCES
+// ===========================================================================
+
+model Resource {
+  id         String         @id @default(uuid()) @db.Uuid
+  title      String
+  category   String
+  tags       String[]       @default([])
+  status     ResourceStatus @default(draft)
+  storageKey String
+  accessRule AccessRule     @default(public)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  events ResourceEvent[]
+
+  @@index([status])
+  @@index([category])
+  @@index([accessRule])
+}
+
+enum ResourceStatus {
+  draft
+  published
+  archived
+}
+
+enum AccessRule {
+  public
+  registered_only
+}
+
+model ResourceEvent {
+  id         String            @id @default(uuid()) @db.Uuid
+  userId     String?           @db.Uuid
+  resourceId String            @db.Uuid
+  type       ResourceEventType
+  createdAt  DateTime          @default(now())
+
+  user     User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@index([resourceId])
+  @@index([userId])
+}
+
+enum ResourceEventType {
+  view
+  download
+}
+
+// ===========================================================================
+// CIRCLE
+// ===========================================================================
+
+model CircleGroup {
+  id               String              @id @default(uuid()) @db.Uuid
+  name             String
+  description      String?
+  slug             String              @unique
+  visibility       GroupVisibility     @default(public)
+  moderationStatus ModerationStatus    @default(active)
+  createdAt        DateTime            @default(now())
+
+  memberships GroupMembership[]
+  posts       Post[]
+
+  @@index([visibility])
+  @@index([slug])
+}
+
+enum GroupVisibility {
+  public
+  private
+}
+
+enum ModerationStatus {
+  active
+  suspended
+}
+
+model GroupMembership {
+  id       String          @id @default(uuid()) @db.Uuid
+  groupId  String          @db.Uuid
+  userId   String          @db.Uuid
+  role     MembershipRole  @default(member)
+  joinedAt DateTime        @default(now())
+
+  group CircleGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([groupId])
+  @@index([userId])
+}
+
+enum MembershipRole {
+  member
+  moderator
+  admin
+}
+
+model Post {
+  id               String           @id @default(uuid()) @db.Uuid
+  groupId          String           @db.Uuid
+  authorId         String           @db.Uuid
+  content          String
+  visibility       PostVisibility   @default(group)
+  moderationStatus PostModStatus    @default(pending)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  group  CircleGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  author User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+  @@index([authorId])
+  @@index([moderationStatus])
+}
+
+enum PostVisibility {
+  group
+  public
+}
+
+enum PostModStatus {
+  pending
+  approved
+  rejected
+}
+
+model AuditEvent {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String?  @db.Uuid
+  action     String
+  targetType String
+  targetId   String
+  payload    Json     @default("{}")
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+}
+
+// ===========================================================================
+// COURSES
+// ===========================================================================
+
+model Course {
+  id          String       @id @default(uuid()) @db.Uuid
+  title       String
+  description String?
+  status      CourseStatus @default(draft)
+  createdAt   DateTime     @default(now())
+
+  modules    CourseModule[]
+  enrolments Enrolment[]
+  deadlines  Deadline[]
+}
+
+enum CourseStatus {
+  draft
+  published
+  archived
+}
+
+model CourseModule {
+  id       String @id @default(uuid()) @db.Uuid
+  courseId String @db.Uuid
+  title    String
+  order    Int    @default(0)
+  createdAt DateTime @default(now())
+
+  course Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  stages CourseStage[]
+
+  @@index([courseId])
+  @@index([order])
+}
+
+model CourseStage {
+  id                 String   @id @default(uuid()) @db.Uuid
+  moduleId           String   @db.Uuid
+  title              String
+  order              Int      @default(0)
+  requirements       Json     @default("{}")
+  completionCriteria Json     @default("{}")
+  prerequisites      Json     @default("[]")
+  createdAt          DateTime @default(now())
+
+  module        CourseModule    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  courseProgress CourseProgress[]
+  deadlines     Deadline[]
+
+  @@index([moduleId])
+  @@index([order])
+}
+
+model Enrolment {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @db.Uuid
+  courseId    String    @db.Uuid
+  enrolledAt  DateTime  @default(now())
+  completedAt DateTime?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+}
+
+model CourseProgress {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @db.Uuid
+  stageId     String    @db.Uuid
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  updatedAt   DateTime  @updatedAt
+
+  user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stage CourseStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, stageId])
+  @@index([userId])
+  @@index([stageId])
+}
+
+model Deadline {
+  id       String   @id @default(uuid()) @db.Uuid
+  userId   String   @db.Uuid
+  stageId  String?  @db.Uuid
+  courseId String?  @db.Uuid
+  dueAt    DateTime
+  createdAt DateTime @default(now())
+
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stage  CourseStage? @relation(fields: [stageId], references: [id], onDelete: SetNull)
+  course Course?      @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([dueAt])
+}
+
+// ===========================================================================
+// NOTIFICATIONS
+// ===========================================================================
+
+model NotificationTemplate {
+  id        String          @id @default(uuid()) @db.Uuid
+  name      String          @unique
+  channel   NotifChannel
+  subject   String?
+  body      String
+  createdAt DateTime        @default(now())
+
+  schedules  NotificationSchedule[]
+  deliveries NotificationDelivery[]
+}
+
+enum NotifChannel {
+  email
+  whatsapp
+}
+
+model NotificationSchedule {
+  id           String      @id @default(uuid()) @db.Uuid
+  userId       String      @db.Uuid
+  templateId   String      @db.Uuid
+  channel      NotifChannel
+  scheduledFor DateTime
+  createdAt    DateTime    @default(now())
+
+  user       User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template   NotificationTemplate   @relation(fields: [templateId], references: [id])
+  deliveries NotificationDelivery[]
+
+  @@index([userId])
+  @@index([scheduledFor])
+}
+
+model NotificationDelivery {
+  id         String         @id @default(uuid()) @db.Uuid
+  scheduleId String?        @db.Uuid
+  userId     String         @db.Uuid
+  templateId String         @db.Uuid
+  channel    NotifChannel
+  status     DeliveryStatus @default(queued)
+  provider   String?
+  attempts   Int            @default(0)
+  error      String?
+  sentAt     DateTime?
+  createdAt  DateTime       @default(now())
+
+  schedule NotificationSchedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+  user     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template NotificationTemplate  @relation(fields: [templateId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([scheduleId])
+}
+
+enum DeliveryStatus {
+  queued
+  sent
+  failed
+  bounced
+}
+
+// ===========================================================================
+// CONFIG & FLAGS
+// ===========================================================================
+
+model AppConfig {
+  id          String   @id @default(uuid()) @db.Uuid
+  key         String   @unique
+  value       Json
+  description String?
+  updatedAt   DateTime @updatedAt
+
+  @@index([key])
+}
+
+model FeatureFlag {
+  id          String   @id @default(uuid()) @db.Uuid
+  key         String   @unique
+  enabled     Boolean  @default(false)
+  description String?
+  updatedAt   DateTime @updatedAt
+
+  @@index([key])
+}
+
+// ===========================================================================
+// GUEST MIGRATION & IDEMPOTENCY
+// ===========================================================================
+
+model GuestMigration {
+  id              String   @id @default(uuid()) @db.Uuid
+  guestRef        String
+  userId          String   @db.Uuid
+  migratedAt      DateTime @default(now())
+  eventsMigrated  Int      @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([guestRef])
+  @@index([userId])
+}
+
+model IdempotencyRecord {
+  id        String   @id @default(uuid()) @db.Uuid
+  scope     String
+  key       String
+  response  Json
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([scope, key])
+  @@index([expiresAt])
+}
+
