@@ -1,5 +1,6 @@
 // lib/core/api_client/api_client.dart
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/auth_storage.dart';
 import '../guest/guest_storage.dart';
@@ -7,19 +8,39 @@ import 'auth_interceptor.dart';
 import 'idempotency_interceptor.dart';
 import 'error_interceptor.dart';
 
-/// Base URL for the ConfCircle backend API.
-/// Override with an environment variable or remote config in production.
-const _kBaseUrl = 'https://api.conficircle.com';
+/// Resolves the optimal Base URL for the ConfCircle backend API.
+/// - Prioritizes compile-time environment variable `API_URL`
+/// - Web (localhost:8080) -> connects to `http://localhost:3000`
+/// - Android emulator -> connects to `http://10.0.2.2:3000`
+/// - Desktop / iOS Simulator -> connects to `http://localhost:3000`
+/// - Production release default -> `https://api.conficircle.com`
+String getBaseUrl() {
+  const envUrl = String.fromEnvironment('API_URL');
+  if (envUrl.isNotEmpty) {
+    return envUrl;
+  }
+  if (kIsWeb) {
+    return 'http://localhost:3000';
+  }
+  if (!kReleaseMode) {
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:3000';
+    }
+    return 'http://localhost:3000';
+  }
+  return 'https://api.conficircle.com';
+}
 
 /// Creates and configures the [Dio] HTTP client with all interceptors.
 Dio createDio({
   required AuthStorage authStorage,
   required GuestStorage guestStorage,
   required Ref ref,
+  String? baseUrl,
 }) {
   final dio = Dio(
     BaseOptions(
-      baseUrl: _kBaseUrl,
+      baseUrl: baseUrl ?? getBaseUrl(),
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 30),
       headers: {
