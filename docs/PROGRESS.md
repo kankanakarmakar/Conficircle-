@@ -11,6 +11,7 @@
 | C | Flows 04–06 (learning, video/quick tip, assessments) | ✅ Complete | Implemented & unit tested |
 | D | Flows 07–09 (resources, circle, me, course, notifications) | ✅ Complete | Implemented with adapters |
 | E | Flow 10 hardening, tests, docs | ✅ Complete | All backend + Flutter tests green |
+| F | Specification v3.0: Level 4 Question Prompts Discovery & Personalisation | ✅ Complete | L4-only discovery, 7-8 guest, 5-6 registered, shuffle, problem profile |
 
 ---
 
@@ -60,6 +61,32 @@
   - `/docs/API.md`: Full endpoint catalog matching OpenAPI specification
   - `/docs/ASSUMPTIONS.md`: All architecture and engineering decisions documented
   - `/docs/PROGRESS.md`: Comprehensive completion report
+
+### Phase F — Specification v3.0 Deliverables
+- [x] **Data Model (Prisma)**:
+  - `TaxonomyNode`: L0–L3 hierarchy storing internal categorization without consumer exposure
+  - `QuestionPrompt`: Level 4 prompt text, helper text, publication status, guest/registered eligibility, editorial boost
+  - `ConcernPrompt`: Plain-language user-facing concern statements mapped privately to internal L2/L1 nodes
+  - `UserProblemProfile`: Stored user concern selections, priority, status (active/paused/removed), and consent
+  - `DiscoveryBatch` & `DiscoveryEvent`: Immutable batch generation and telemetry tracking
+  - `RecommendationConfig`: Configurable scoring weights and batch sizes
+- [x] **Backend Monolith (NestJS DiscoveryModule)**:
+  - `GET /v1/discovery/guest`: 7–8 Level 4 questions only with Redis TTL validation
+  - `POST /v1/discovery/guest/shuffle`: Fresh batch of 7–8 Level 4 questions avoiding repeats
+  - `GET /v1/discovery/registered`: 5–6 Level 4 questions scored via profile matching + boosts - penalties
+  - `POST /v1/discovery/registered/shuffle`: Fresh batch of 5–6 Level 4 questions
+  - `GET /v1/questions/:id`: Question-led detail with access entitlements
+  - `POST /v1/problem-profile`, `PATCH /v1/problem-profile/:id`, `GET /v1/problem-profile`, `GET /v1/problem-profile/concerns`
+  - `GET /v1/recommendations/questions`
+  - Zero taxonomy leakage in all consumer DTOs (no L0–L3 names or parent paths)
+  - Updated `HomeScreen` endpoint in `home.service.ts` to return Level 4 questions only
+- [x] **Frontend Architecture (Flutter)**:
+  - `DiscoveryModule`: `GuestQuestionDiscoveryScreen`, `RegisteredQuestionDiscoveryScreen`, `QuestionCard`, `ShuffleControl`, `DiscoveryBatchState`, `LoadingSkeleton`, `EmptyState`, `RetryState`
+  - `QuestionModule`: `QuestionDetailScreen`, `QuestionHeader`, `ContentActionList` with access gates
+  - `ProblemProfileModule`: `ConcernPicker`, `ConcernSearch`, `SelectedConcernChips`, `PrioritySelector`, `ConsentNotice`, `ProfileEditor`
+  - `DiscoveryRepository`: Methods for guest/registered batches, shuffles, question detail, and problem profiles
+  - Immutable batch state: Current cards remain visible during shuffle, updated only upon success
+  - Updated `TopicGridSection` and `ActionCardGrid` in Home to render Level 4 question prompts discovery cards only
 
 ---
 

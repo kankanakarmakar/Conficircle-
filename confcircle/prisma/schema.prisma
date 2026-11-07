@@ -45,6 +45,7 @@ model User {
   notificationSchedules NotificationSchedule[]
   notificationDeliveries NotificationDelivery[]
   guestMigrations      GuestMigration[]
+  problemProfiles      UserProblemProfile[]
 
   @@index([email])
   @@index([status])
@@ -756,4 +757,140 @@ model IdempotencyRecord {
   @@unique([scope, key])
   @@index([expiresAt])
 }
+
+// ===========================================================================
+// TAXONOMY & DISCOVERY (SPECIFICATION V3.0)
+// Level 0: Root grouping / internal organisation
+// Level 1: Broad problem-domain classification (FIXED)
+// Level 2: Problem subcategory mapping (99% FIXED)
+// Level 3: Internal grouping & recommendation context (WILL EVOLVE)
+// Level 4: ONLY consumer-facing discovery cards (WILL EVOLVE)
+// ===========================================================================
+
+model TaxonomyNode {
+  id           String   @id @default(uuid()) @db.Uuid
+  parentId     String?  @db.Uuid
+  level        Int      // 0, 1, 2, 3
+  internalName String
+  status       String   @default("published") // draft, published, archived
+  metadata     Json     @default("{}")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  parent          TaxonomyNode?    @relation("TaxonomyHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children        TaxonomyNode[]   @relation("TaxonomyHierarchy")
+  questionPrompts QuestionPrompt[]
+  concernPrompts  ConcernPrompt[]
+
+  @@index([parentId])
+  @@index([level])
+  @@index([status])
+}
+
+model QuestionPrompt {
+  id                 String   @id @default(uuid()) @db.Uuid
+  promptText         String
+  shortDescription   String?
+  displayAsset       String?
+  taxonomyNodeId     String   @db.Uuid
+  publishStatus      String   @default("published") // draft, review, published, archived, disabled
+  guestEligible      Boolean  @default(true)
+  registeredEligible Boolean  @default(true)
+  version            Int      @default(1)
+  editorialBoost     Float    @default(0.0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  taxonomyNode       TaxonomyNode     @relation(fields: [taxonomyNodeId], references: [id])
+  discoveryEvents    DiscoveryEvent[]
+
+  @@index([taxonomyNodeId])
+  @@index([publishStatus])
+  @@index([guestEligible])
+  @@index([registeredEligible])
+}
+
+model ConcernPrompt {
+  id             String   @id @default(uuid()) @db.Uuid
+  promptText     String   // Plain-language user-facing concern statement
+  taxonomyNodeId String   @db.Uuid // Hidden L2 or L1 node
+  active         Boolean  @default(true)
+  order          Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  taxonomyNode   TaxonomyNode         @relation(fields: [taxonomyNodeId], references: [id])
+  userProfiles   UserProblemProfile[]
+
+  @@index([taxonomyNodeId])
+  @@index([active])
+}
+
+model UserProblemProfile {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @db.Uuid
+  concernPromptId String   @db.Uuid
+  priority        Int      @default(1)
+  status          String   @default("active") // active, paused, removed
+  consentGiven    Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  concernPrompt   ConcernPrompt @relation(fields: [concernPromptId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([concernPromptId])
+  @@index([status])
+}
+
+model DiscoveryBatch {
+  id             String    @id @default(uuid()) @db.Uuid
+  audience       String    // "guest" | "registered"
+  itemIds        Json      // Array of question UUIDs
+  userId         String?   @db.Uuid
+  guestRef       String?
+  requestContext Json      @default("{}")
+  createdAt      DateTime  @default(now())
+  expiresAt      DateTime?
+
+  @@index([audience])
+  @@index([guestRef])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model DiscoveryEvent {
+  id         String   @id @default(uuid()) @db.Uuid
+  audience   String   // "guest" | "registered"
+  userId     String?  @db.Uuid
+  guestRef   String?
+  questionId String   @db.Uuid
+  eventType  String   // impression, shuffle, selection, dismissal, content_open, completion
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now())
+
+  question   QuestionPrompt @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([audience])
+  @@index([questionId])
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+model RecommendationConfig {
+  id                      String   @id @default(uuid()) @db.Uuid
+  guestBatchSize          Int      @default(8) // Default 7-8
+  registeredBatchSize     Int      @default(6) // Default 5-6
+  profileMatchWeight      Float    @default(3.0)
+  editorialBoostWeight    Float    @default(2.0)
+  freshnessBoostWeight    Float    @default(1.0)
+  explorationBonusWeight  Float    @default(1.5)
+  recentSeenPenaltyWeight Float    @default(2.5)
+  dismissedPenaltyWeight  Float    @default(5.0)
+  historyWindowDays       Int      @default(7)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+}
+
 

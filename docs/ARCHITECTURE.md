@@ -275,3 +275,84 @@ sequenceDiagram
   end
 ```
 
+## Level 4 Discovery & Recommendation Architecture (Spec v3.0)
+
+### Taxonomy Hierarchy & Consumer Visibility Boundary
+
+```mermaid
+flowchart TD
+  subgraph Hidden["Backend Internal Classification & Relationship Layers (NEVER EXPOSED)"]
+    L0["Level 0: Root Grouping (Internal Organisation)"]
+    L1["Level 1: Broad Problem-Domain (FIXED)"]
+    L2["Level 2: Problem Subcategories (99% FIXED)"]
+    L3["Level 3: Internal Grouping & Reco Context (WILL EVOLVE)"]
+    
+    L0 --> L1
+    L1 --> L2
+    L2 --> L3
+  end
+
+  subgraph ConsumerBoundary["=== CONSUMER DISCOVERY BOUNDARY ==="]
+    L4["Level 4: Natural-Language Question Prompts (WILL EVOLVE)\nONLY Discovery Content Shown to Guests & Registered Users"]
+  end
+
+  L3 --> L4
+
+  subgraph DiscoveryFeeds["Consumer Presentation"]
+    GuestFeed["Guest Feed:\n7–8 Level 4 Questions\n+ Shuffle"]
+    RegFeed["Registered User Feed:\n5–6 Level 4 Questions\n+ Shuffle + Personalisation"]
+  end
+
+  L4 --> GuestFeed
+  L4 --> RegFeed
+
+  subgraph PersonalisationMapping["Private Problem Profile Flow"]
+    CuratedConcerns["Plain-Language Concern Statements\n(User Facing)"]
+    CuratedConcerns -.->|Hidden Private Mapping| L2
+  end
+```
+
+### Discovery Batch & Shuffle Sequence
+
+```mermaid
+sequenceDiagram
+  actor User as User (Guest or Registered)
+  participant Flutter as Flutter Discovery Screen
+  participant API as NestJS DiscoveryController
+  participant Service as DiscoveryService
+  participant PG as PostgreSQL
+  participant Redis as Redis
+
+  User->>Flutter: Opens App / Discovery Home
+  alt Guest User
+    Flutter->>API: GET /v1/discovery/guest?limit=8 [X-Guest-Ref]
+    API->>Redis: Check guest:session:{guest_ref} TTL
+    API->>Service: getGuestBatch(guestRef, limit=8)
+    Service->>PG: Query QuestionPrompt (publishStatus='published', guestEligible=true)
+    Service->>Service: Filter out previous batch items; sample diverse 7–8 L4 questions
+    Service->>PG: Create DiscoveryBatch
+    Service->>Redis: Record impression event
+    Service-->>Flutter: {batchId, items: [7-8 Level 4 question items], expiresAt}
+  else Registered User
+    Flutter->>API: GET /v1/discovery/registered?limit=6 [Bearer]
+    API->>Service: getRegisteredBatch(userId, limit=6)
+    Service->>PG: Load UserProblemProfile -> mapped L2/L1 taxonomy nodes
+    Service->>PG: Load recent events for repeat penalty
+    Service->>Service: Score candidates: profile_match + boosts - penalties; sample 5–6 L4 questions
+    Service->>PG: Create DiscoveryBatch & DiscoveryEvent
+    Service-->>Flutter: {batchId, items: [5-6 Level 4 question items with safe labels]}
+  end
+  Flutter->>User: Renders QuestionCard batch (Level 4 questions ONLY)
+
+  opt User Taps Shuffle
+    User->>Flutter: Tap Shuffle
+    Flutter->>Flutter: Show shuffle spinner; KEEP CURRENT CARDS VISIBLE
+    Flutter->>API: POST /v1/discovery/{audience}/shuffle {previousBatchId, excludedIds}
+    API->>Service: Sample fresh candidate batch
+    Service-->>Flutter: {newBatchId, items: [fresh batch]}
+    Flutter->>Flutter: Replace cards only after successful response
+    Flutter->>User: Displays fresh question cards
+  end
+```
+
+

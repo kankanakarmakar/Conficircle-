@@ -201,6 +201,216 @@
         ]
       }
     },
+    "/v1/discovery/guest": {
+      "get": {
+        "operationId": "DiscoveryController_getGuestBatch",
+        "summary": "Get batch of 7-8 Level 4 question prompts for guest discovery",
+        "parameters": [
+          {
+            "name": "X-Guest-Ref",
+            "in": "header",
+            "description": "Opaque guest reference token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Batch size (7-8, default 8)",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "previous_batch_id",
+            "in": "query",
+            "description": "Previous batch ID",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "7-8 Level 4 question prompts"
+          }
+        },
+        "tags": [
+          "Discovery"
+        ]
+      }
+    },
+    "/v1/discovery/guest/shuffle": {
+      "post": {
+        "operationId": "DiscoveryController_shuffleGuestBatch",
+        "summary": "Shuffle and get a fresh batch of 7-8 Level 4 questions for guest",
+        "parameters": [
+          {
+            "name": "X-Guest-Ref",
+            "in": "header",
+            "description": "Opaque guest reference token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "New batch of 7-8 Level 4 question items"
+          }
+        },
+        "tags": [
+          "Discovery"
+        ]
+      }
+    },
+    "/v1/discovery/registered": {
+      "get": {
+        "operationId": "DiscoveryController_getRegisteredBatch",
+        "summary": "Get personalised batch of 5-6 Level 4 questions for registered user",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Batch size (5-6, default 6)",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "5-6 Level 4 question prompts"
+          }
+        },
+        "tags": [
+          "Discovery"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/discovery/registered/shuffle": {
+      "post": {
+        "operationId": "DiscoveryController_shuffleRegisteredBatch",
+        "summary": "Shuffle and get fresh batch of 5-6 Level 4 questions for registered user",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "New batch of 5-6 Level 4 questions"
+          }
+        },
+        "tags": [
+          "Discovery"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/questions/{id}": {
+      "get": {
+        "operationId": "DiscoveryController_getQuestionDetail",
+        "summary": "Get question-led detail with permitted content actions",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Question prompt details and permitted actions"
+          }
+        },
+        "tags": [
+          "Discovery"
+        ]
+      }
+    },
+    "/v1/problem-profile": {
+      "get": {
+        "operationId": "DiscoveryController_getUserProblemProfile",
+        "summary": "Get saved problem profile concerns",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "User problem profile"
+          }
+        },
+        "tags": [
+          "ProblemProfile"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "DiscoveryController_saveProblemProfile",
+        "summary": "Save selected concerns for discovery personalisation",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Problem profile saved"
+          }
+        },
+        "tags": [
+          "ProblemProfile"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/problem-profile/concerns": {
+      "get": {
+        "operationId": "DiscoveryController_getCuratedConcerns",
+        "summary": "Get curated list of plain-language concern statements",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Curated concern prompts"
+          }
+        },
+        "tags": [
+          "ProblemProfile"
+        ]
+      }
+    },
+    "/v1/recommendations/questions": {
+      "get": {
+        "operationId": "DiscoveryController_getRecommendations",
+        "summary": "Get personalised Level 4 prompts with safe reason labels",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Ranked Level 4 questions"
+          }
+        },
+        "tags": [
+          "Discovery"
+        ]
+      }
+    },
     "/v1/config": {
       "get": {
         "operationId": "ConfigPublicController_getConfig",

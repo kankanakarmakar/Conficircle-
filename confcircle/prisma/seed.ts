@@ -614,6 +614,306 @@ The ConfCircle Team`,
     });
   }
 
+  // ─────────────────────────────────────────────
+  // RecommendationConfig (Spec v3.0)
+  // ─────────────────────────────────────────────
+  console.log('  → RecommendationConfig (v3.0)');
+  const existingConfig = await (prisma as any).recommendationConfig?.findFirst();
+  if (!existingConfig && (prisma as any).recommendationConfig) {
+    await (prisma as any).recommendationConfig.create({
+      data: {
+        guestBatchSize: 8,
+        registeredBatchSize: 6,
+        profileMatchWeight: 3.0,
+        editorialBoostWeight: 2.0,
+        freshnessBoostWeight: 1.0,
+        explorationBonusWeight: 1.5,
+        recentSeenPenaltyWeight: 2.5,
+        dismissedPenaltyWeight: 5.0,
+        historyWindowDays: 7,
+      },
+    });
+  }
+
+  // ─────────────────────────────────────────────
+  // Taxonomy Hierarchy (L0 -> L1 -> L2 -> L3) & QuestionPrompts (L4)
+  // ─────────────────────────────────────────────
+  console.log('  → Taxonomy Nodes (L0-L3) & Question Prompts (L4)');
+  if ((prisma as any).taxonomyNode) {
+    // Level 0: Root
+    let l0Root = await (prisma as any).taxonomyNode.findFirst({ where: { level: 0 } });
+    if (!l0Root) {
+      l0Root = await (prisma as any).taxonomyNode.create({
+        data: {
+          level: 0,
+          internalName: 'ConfCircle Master Taxonomy Root',
+          status: 'published',
+        },
+      });
+    }
+
+    // Level 1: Broad problem domains (FIXED)
+    const l1Domains = [
+      'Self Development & Confidence',
+      'Communication & Expression',
+      'Career & Higher Studies',
+      'Wellbeing & Resilience',
+      'Financial Clarity',
+    ];
+
+    const l1Nodes: Record<string, any> = {};
+    for (const name of l1Domains) {
+      let node = await (prisma as any).taxonomyNode.findFirst({
+        where: { level: 1, internalName: name, parentId: l0Root.id },
+      });
+      if (!node) {
+        node = await (prisma as any).taxonomyNode.create({
+          data: {
+            parentId: l0Root.id,
+            level: 1,
+            internalName: name,
+            status: 'published',
+          },
+        });
+      }
+      l1Nodes[name] = node;
+    }
+
+    // Level 2: Problem subcategories (99% FIXED)
+    const l2Definitions = [
+      { name: 'Overthinking & Action Paralysis', parent: 'Self Development & Confidence' },
+      { name: 'Self-Doubt & Imposter Feelings', parent: 'Self Development & Confidence' },
+      { name: 'Public Speaking & Meeting Anxiety', parent: 'Communication & Expression' },
+      { name: 'Assertiveness & Difficult Conversations', parent: 'Communication & Expression' },
+      { name: 'Interview & Career Positioning', parent: 'Career & Higher Studies' },
+      { name: 'Academic Direction & Study Strategy', parent: 'Career & Higher Studies' },
+      { name: 'Stress, Burnout & Emotional Energy', parent: 'Wellbeing & Resilience' },
+    ];
+
+    const l2Nodes: Record<string, any> = {};
+    for (const def of l2Definitions) {
+      const parentNode = l1Nodes[def.parent];
+      let node = await (prisma as any).taxonomyNode.findFirst({
+        where: { level: 2, internalName: def.name, parentId: parentNode.id },
+      });
+      if (!node) {
+        node = await (prisma as any).taxonomyNode.create({
+          data: {
+            parentId: parentNode.id,
+            level: 2,
+            internalName: def.name,
+            status: 'published',
+          },
+        });
+      }
+      l2Nodes[def.name] = node;
+    }
+
+    // Level 3: Internal grouping & recommendation context (WILL EVOLVE)
+    const l3Definitions = [
+      { name: 'Meeting Participation Tactics', parent: 'Public Speaking & Meeting Anxiety' },
+      { name: 'Presentation Confidence', parent: 'Public Speaking & Meeting Anxiety' },
+      { name: 'Decisive Action Frameworks', parent: 'Overthinking & Action Paralysis' },
+      { name: 'Self-Worth & Inner Compass', parent: 'Self-Doubt & Imposter Feelings' },
+      { name: 'Boundary Setting & Saying No', parent: 'Assertiveness & Difficult Conversations' },
+      { name: 'Job Interview Mastery', parent: 'Interview & Career Positioning' },
+      { name: 'Daily Stress Reset Habits', parent: 'Stress, Burnout & Emotional Energy' },
+      { name: 'Focused Study Systems', parent: 'Academic Direction & Study Strategy' },
+    ];
+
+    const l3Nodes: Record<string, any> = {};
+    for (const def of l3Definitions) {
+      const parentNode = l2Nodes[def.parent];
+      let node = await (prisma as any).taxonomyNode.findFirst({
+        where: { level: 3, internalName: def.name, parentId: parentNode.id },
+      });
+      if (!node) {
+        node = await (prisma as any).taxonomyNode.create({
+          data: {
+            parentId: parentNode.id,
+            level: 3,
+            internalName: def.name,
+            status: 'published',
+          },
+        });
+      }
+      l3Nodes[def.name] = node;
+    }
+
+    // Level 4: Question Prompts (WILL EVOLVE) - The ONLY consumer discovery cards
+    const l4Questions = [
+      {
+        promptText: 'How do I stop overthinking in group meetings and actually speak up?',
+        shortDescription: 'Quick tactics to contribute before hesitation takes over',
+        l3Parent: 'Meeting Participation Tactics',
+        guestEligible: true,
+        registeredEligible: true,
+      },
+      {
+        promptText: 'What can I do when imposter syndrome kicks in before a big presentation?',
+        shortDescription: 'Mental grounding techniques to regain your calm',
+        l3Parent: 'Presentation Confidence',
+        guestEligible: true,
+        registeredEligible: true,
+      },
+      {
+        promptText: 'How do I make tough decisions without constantly second-guessing myself?',
+        shortDescription: 'A practical framework to commit and move forward with conviction',
+        l3Parent: 'Decisive Action Frameworks',
+        guestEligible: true,
+        registeredEligible: true,
+      },
+      {
+        promptText: 'How can I stop comparing my career journey to my peers on social media?',
+        shortDescription: 'Refocusing on your personal timeline and real strengths',
+        l3Parent: 'Self-Worth & Inner Compass',
+        guestEligible: true,
+        registeredEligible: true,
+      },
+      {
+        promptText: 'How do I set firm boundaries with friends or colleagues without feeling guilty?',
+        shortDescription: 'Scripts and mindset shifts for saying no cleanly and kindly',
+        l3Parent: 'Boundary Setting & Saying No',
+        guestEligible: true,
+        registeredEligible: true,
+      },
+      {
+        promptText: 'How should I answer "Tell me about a time you failed" in an interview?',
+        shortDescription: 'Turn a past mistake into a compelling story of resilience',
+        l3Parent: 'Job Interview Mastery',
+        guestEligible: true,
+        registeredEligible: true,
+      },
+      {
+        promptText: 'What is a 2-minute daily routine to reset when stress feels overwhelming?',
+        shortDescription: 'Somatic breathing and nervous system calming tools',
+        l3Parent: 'Daily Stress Reset Habits',
+        guestEligible: true,
+        registeredEligible: true,
+      },
+      {
+        promptText: 'How can I retain what I study without having to re-read everything twice?',
+        shortDescription: 'Active recall and spaced repetition in simple steps',
+        l3Parent: 'Focused Study Systems',
+        guestEligible: true,
+        registeredEligible: true,
+      },
+      {
+        promptText: 'How do I handle an awkward silence in a 1-on-1 conversation?',
+        shortDescription: 'Natural follow-up prompts to keep conversations comfortable',
+        l3Parent: 'Meeting Participation Tactics',
+        guestEligible: true,
+        registeredEligible: true,
+      },
+      {
+        promptText: 'What should I do right after making a visible mistake at work or college?',
+        shortDescription: 'Own it, correct it, and rebuild trust without defensiveness',
+        l3Parent: 'Decisive Action Frameworks',
+        guestEligible: true,
+        registeredEligible: true,
+      },
+      {
+        promptText: 'How do I ask senior leaders for guidance without feeling like a burden?',
+        shortDescription: 'How to structure high-impact, respectful mentorship requests',
+        l3Parent: 'Boundary Setting & Saying No',
+        guestEligible: true,
+        registeredEligible: true,
+      },
+      {
+        promptText: 'How can I stay calm and articulate under unexpected questioning?',
+        shortDescription: 'The "Pause-Acknowledge-Answer" method for high-pressure moments',
+        l3Parent: 'Presentation Confidence',
+        guestEligible: true,
+        registeredEligible: true,
+      },
+    ];
+
+    for (const q of l4Questions) {
+      const parentNode = l3Nodes[q.l3Parent];
+      if (parentNode) {
+        const existing = await (prisma as any).questionPrompt.findFirst({
+          where: { promptText: q.promptText },
+        });
+        if (!existing) {
+          await (prisma as any).questionPrompt.create({
+            data: {
+              promptText: q.promptText,
+              shortDescription: q.shortDescription,
+              taxonomyNodeId: parentNode.id,
+              publishStatus: 'published',
+              guestEligible: q.guestEligible,
+              registeredEligible: q.registeredEligible,
+              version: 1,
+            },
+          });
+        }
+      }
+    }
+
+    // Concern Prompts (User-facing plain language statements mapped to hidden L2 nodes)
+    const concernDefinitions = [
+      {
+        promptText: 'I freeze or stay quiet during important meetings or discussions',
+        l2Parent: 'Public Speaking & Meeting Anxiety',
+        order: 1,
+      },
+      {
+        promptText: 'I constantly second-guess my decisions and overthink simple choices',
+        l2Parent: 'Overthinking & Action Paralysis',
+        order: 2,
+      },
+      {
+        promptText: 'I struggle with confidence and feel like I don\'t belong',
+        l2Parent: 'Self-Doubt & Imposter Feelings',
+        order: 3,
+      },
+      {
+        promptText: 'I get anxious before interviews, presentations, or pitches',
+        l2Parent: 'Public Speaking & Meeting Anxiety',
+        order: 4,
+      },
+      {
+        promptText: 'I have trouble setting boundaries and saying no to people',
+        l2Parent: 'Assertiveness & Difficult Conversations',
+        order: 5,
+      },
+      {
+        promptText: 'I feel overwhelmed by stress, burnout, and emotional fatigue',
+        l2Parent: 'Stress, Burnout & Emotional Energy',
+        order: 6,
+      },
+      {
+        promptText: 'I need clarity on my career path and interview confidence',
+        l2Parent: 'Interview & Career Positioning',
+        order: 7,
+      },
+      {
+        promptText: 'I want better study habits and learning productivity',
+        l2Parent: 'Academic Direction & Study Strategy',
+        order: 8,
+      },
+    ];
+
+    for (const c of concernDefinitions) {
+      const l2Node = l2Nodes[c.l2Parent];
+      if (l2Node) {
+        const existing = await (prisma as any).concernPrompt.findFirst({
+          where: { promptText: c.promptText },
+        });
+        if (!existing) {
+          await (prisma as any).concernPrompt.create({
+            data: {
+              promptText: c.promptText,
+              taxonomyNodeId: l2Node.id,
+              order: c.order,
+              active: true,
+            },
+          });
+        }
+      }
+    }
+  }
+
   console.log('✅ Seed complete!');
 }
 

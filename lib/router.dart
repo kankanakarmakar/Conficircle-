@@ -6,11 +6,12 @@ import 'screens/splash/splash_screen.dart';
 import 'screens/auth/auth_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/main_shell.dart';
-import 'screens/topic/topic_detail_screen.dart';
 import 'screens/assessment/assessment_screen.dart';
 import 'screens/assessment/assessment_result_screen.dart';
 import 'screens/resources/resource_detail_screen.dart';
 import 'screens/circle/group_detail_screen.dart';
+import 'features/discovery/presentation/screens/question_detail_screen.dart';
+import 'features/discovery/presentation/screens/problem_profile_screen.dart';
 import 'core/auth/token_manager.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -42,12 +43,25 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const MainShell(),
       ),
       GoRoute(
+        path: '/question/:id',
+        name: 'question_detail',
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          return QuestionDetailScreen(questionId: id);
+        },
+      ),
+      GoRoute(
         path: '/topic/:id',
         name: 'topic_detail',
         builder: (context, state) {
           final id = state.pathParameters['id'] ?? '';
-          return TopicDetailScreen(topicId: id);
+          return QuestionDetailScreen(questionId: id);
         },
+      ),
+      GoRoute(
+        path: '/problem-profile',
+        name: 'problem_profile',
+        builder: (context, state) => const ProblemProfileScreen(),
       ),
       GoRoute(
         path: '/assessment/:id',

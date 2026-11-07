@@ -17,6 +17,7 @@ import { CircleModule } from './modules/circle/circle.module';
 import { MeModule } from './modules/me/me.module';
 import { CoursesModule } from './modules/courses/courses.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { DiscoveryModule } from './modules/discovery/discovery.module';
 import { HealthModule } from './modules/health/health.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
@@ -53,6 +54,7 @@ import { configValidationSchema } from './config/config.schema';
     MeModule,
     CoursesModule,
     NotificationsModule,
+    DiscoveryModule,
     HealthModule,
   ],
   providers: [

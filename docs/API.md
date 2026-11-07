@@ -61,6 +61,31 @@ All error responses return:
 
 ---
 
+## 3.1 Discovery & Level 4 Question Prompts (`/v1/discovery` & `/v1/questions` — Spec v3.0)
+> **Product Rule:** Level 4 question prompts are the **ONLY** user-facing discovery items for both guests and registered users. Level 0–Level 3 names and parent paths are internal metadata and are never exposed in consumer DTOs.
+
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| `GET` | `/v1/discovery/guest` | Fetch 7–8 published Level 4 question prompts | `X-Guest-Ref` |
+| `POST` | `/v1/discovery/guest/shuffle` | Request fresh 7–8 Level 4 questions batch | `X-Guest-Ref` |
+| `GET` | `/v1/discovery/registered` | Fetch 5–6 personalised Level 4 question prompts | Bearer |
+| `POST` | `/v1/discovery/registered/shuffle` | Request fresh 5–6 Level 4 questions batch | Bearer |
+| `GET` | `/v1/questions/:id` | Question-led detail & permitted content actions | Guest / Bearer |
+| `GET` | `/v1/recommendations/questions` | Personalised Level 4 questions with safe reason labels | Public / Bearer |
+| `POST` | `/v1/discovery/events` | Record impression, shuffle, selection, or dismissal | Public / Bearer |
+
+---
+
+## 3.2 Problem Profile & Personalisation (`/v1/problem-profile` — Spec v3.0)
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| `GET` | `/v1/problem-profile/concerns` | List curated plain-language concern prompts | Public |
+| `GET` | `/v1/problem-profile` | Get user's active concern selections | Bearer |
+| `POST` | `/v1/problem-profile` | Save concern prompt IDs (mapped internally to L2/L1) | Bearer |
+| `PATCH` | `/v1/problem-profile/:id` | Edit, pause, or remove saved concern | Bearer |
+
+---
+
 ## 4. Home Dashboard (`/v1/home`)
 | Method | Endpoint | Description | Auth |
 |---|---|---|---|

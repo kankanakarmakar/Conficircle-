@@ -52,17 +52,73 @@ class _HomeScreenState extends State<HomeScreen> {
     final isFirst = user.isFirstTime;
 
     return Scaffold(
-      backgroundColor: AppColors.softGrey,
-      body: CustomScrollView(
-        controller: _scrollController,
-        slivers: [
-          // Sticky top bar
-          SliverAppBar(
-            pinned: true,
-            elevation: 0,
-            backgroundColor: AppColors.white,
-            expandedHeight: 0,
-            flexibleSpace: const FlexibleSpaceBar(),
+      backgroundColor: const Color(0xFFF4F7FB),
+      body: Stack(
+        children: [
+          // Ambient decorative soft glowing orbs for authentic glassmorphism refraction
+          Positioned(
+            top: 60,
+            left: -50,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF1E4DB7).withOpacity(0.16),
+                    const Color(0xFF1E4DB7).withOpacity(0.0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 240,
+            right: -70,
+            child: Container(
+              width: 280,
+              height: 280,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.coral.withOpacity(0.14),
+                    AppColors.coral.withOpacity(0.0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 140,
+            left: -20,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF4475D7).withOpacity(0.12),
+                    const Color(0xFF4475D7).withOpacity(0.0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Main scroll view
+          CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              // Sticky top bar
+              SliverAppBar(
+                pinned: true,
+                elevation: 0,
+                backgroundColor: Colors.white.withOpacity(0.92),
+                expandedHeight: 0,
+                flexibleSpace: const FlexibleSpaceBar(),
             title: isFirst
                 // First-time: show logo instead of search bar
                 ? RichText(
@@ -157,10 +213,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-
         ],
       ),
-    );
+    ],
+  ),
+);
   }
 }
 
