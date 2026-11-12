@@ -1,0 +1,1541 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/v1/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "summary": "Register a new user account (migrates guest data if guestRef supplied)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/v1/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "summary": "Login with email and password",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/v1/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refresh",
+        "summary": "Refresh access token using valid refresh token",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/v1/auth/session": {
+      "get": {
+        "operationId": "AuthController_getSession",
+        "summary": "Get current user session info",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "summary": "Revoke refresh sessions and logout",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/guest/session": {
+      "post": {
+        "operationId": "GuestController_createSession",
+        "summary": "Obtain an anonymous guest session with absolute TTL",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGuestSessionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestSessionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Guest"
+        ]
+      }
+    },
+    "/v1/guest/questions": {
+      "get": {
+        "operationId": "GuestController_getQuestions",
+        "summary": "Get 2-3 randomized Level 4 guest questions (cached per session)",
+        "parameters": [
+          {
+            "name": "x-guest-ref",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Guest-Ref",
+            "in": "header",
+            "description": "Opaque guest reference token",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Guest"
+        ]
+      }
+    },
+    "/v1/discovery/guest": {
+      "get": {
+        "operationId": "DiscoveryController_getGuestBatch",
+        "summary": "Get batch of 7-8 Level 4 question prompts for guest discovery",
+        "parameters": [
+          {
+            "name": "X-Guest-Ref",
+            "in": "header",
+            "description": "Opaque guest reference token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Batch size (7-8, default 8)",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "previous_batch_id",
+            "in": "query",
+            "description": "Previous batch ID",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "7-8 Level 4 question prompts"
+          }
+        },
+        "tags": [
+          "Discovery"
+        ]
+      }
+    },
+    "/v1/discovery/guest/shuffle": {
+      "post": {
+        "operationId": "DiscoveryController_shuffleGuestBatch",
+        "summary": "Shuffle and get a fresh batch of 7-8 Level 4 questions for guest",
+        "parameters": [
+          {
+            "name": "X-Guest-Ref",
+            "in": "header",
+            "description": "Opaque guest reference token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "New batch of 7-8 Level 4 question items"
+          }
+        },
+        "tags": [
+          "Discovery"
+        ]
+      }
+    },
+    "/v1/discovery/registered": {
+      "get": {
+        "operationId": "DiscoveryController_getRegisteredBatch",
+        "summary": "Get personalised batch of 5-6 Level 4 questions for registered user",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Batch size (5-6, default 6)",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "5-6 Level 4 question prompts"
+          }
+        },
+        "tags": [
+          "Discovery"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/discovery/registered/shuffle": {
+      "post": {
+        "operationId": "DiscoveryController_shuffleRegisteredBatch",
+        "summary": "Shuffle and get fresh batch of 5-6 Level 4 questions for registered user",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "New batch of 5-6 Level 4 questions"
+          }
+        },
+        "tags": [
+          "Discovery"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/questions/{id}": {
+      "get": {
+        "operationId": "DiscoveryController_getQuestionDetail",
+        "summary": "Get question-led detail with permitted content actions",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Question prompt details and permitted actions"
+          }
+        },
+        "tags": [
+          "Discovery"
+        ]
+      }
+    },
+    "/v1/problem-profile": {
+      "get": {
+        "operationId": "DiscoveryController_getUserProblemProfile",
+        "summary": "Get saved problem profile concerns",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "User problem profile"
+          }
+        },
+        "tags": [
+          "ProblemProfile"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "DiscoveryController_saveProblemProfile",
+        "summary": "Save selected concerns for discovery personalisation",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Problem profile saved"
+          }
+        },
+        "tags": [
+          "ProblemProfile"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/problem-profile/concerns": {
+      "get": {
+        "operationId": "DiscoveryController_getCuratedConcerns",
+        "summary": "Get curated list of plain-language concern statements",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Curated concern prompts"
+          }
+        },
+        "tags": [
+          "ProblemProfile"
+        ]
+      }
+    },
+    "/v1/recommendations/questions": {
+      "get": {
+        "operationId": "DiscoveryController_getRecommendations",
+        "summary": "Get personalised Level 4 prompts with safe reason labels",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Ranked Level 4 questions"
+          }
+        },
+        "tags": [
+          "Discovery"
+        ]
+      }
+    },
+    "/v1/config": {
+      "get": {
+        "operationId": "ConfigPublicController_getConfig",
+        "summary": "Load remote app configuration, theme, quotas, and feature flags",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Config"
+        ]
+      }
+    },
+    "/v1/home": {
+      "get": {
+        "operationId": "HomeController_getHome",
+        "summary": "Get role-appropriate Home dashboard (guest vs registered)",
+        "parameters": [
+          {
+            "name": "X-Guest-Ref",
+            "in": "header",
+            "description": "Optional guest reference",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Home"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/topics": {
+      "get": {
+        "operationId": "TopicsController_getTopics",
+        "summary": "List learning topics with level/category filters and progress",
+        "parameters": [
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "level",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Topics"
+        ]
+      }
+    },
+    "/v1/topics/{id}": {
+      "get": {
+        "operationId": "TopicsController_getTopicDetail",
+        "summary": "Get topic detail with backend-entitlement driven actions",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Topics"
+        ]
+      }
+    },
+    "/v1/topics/{id}/content": {
+      "get": {
+        "operationId": "TopicsController_getTopicContent",
+        "summary": "Get available Quick Tips and Video Solutions for topic",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Topics"
+        ]
+      }
+    },
+    "/v1/quicktips/{id}/open": {
+      "post": {
+        "operationId": "QuickTipsController_openQuickTip",
+        "summary": "Open a Quick Tip (consumes guest quota atomically or unlocks for registered user)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Guest-Ref",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "QuickTips"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/quicktips/{id}": {
+      "get": {
+        "operationId": "QuickTipsController_getQuickTip",
+        "summary": "Get Quick Tip by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "QuickTips"
+        ]
+      }
+    },
+    "/v1/videos/{id}": {
+      "get": {
+        "operationId": "VideosController_getVideo",
+        "summary": "Get video solution metadata (registered only)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Videos"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/videos/{id}/playback-url": {
+      "get": {
+        "operationId": "VideosController_getPlaybackUrl",
+        "summary": "Generate a short-lived HMAC signed video streaming URL",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Videos"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/videos/{id}/progress": {
+      "put": {
+        "operationId": "VideosController_updateProgress",
+        "summary": "Send periodic progress checkpoint and auto-complete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VideoProgressDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Videos"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/assessments/{id}": {
+      "get": {
+        "operationId": "AssessmentsController_getAssessment",
+        "summary": "Get assessment details and questions (correct answers omitted)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Assessments"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/assessments/{id}/attempts": {
+      "post": {
+        "operationId": "AssessmentsController_startAttempt",
+        "summary": "Start a new assessment attempt with server-side timer",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Assessments"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/attempts/{id}/answers": {
+      "put": {
+        "operationId": "AssessmentsController_saveAnswer",
+        "summary": "Autosave answer during assessment attempt",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAnswerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Assessments"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/attempts/{id}/submit": {
+      "post": {
+        "operationId": "AssessmentsController_submitAttempt",
+        "summary": "Submit attempt for server-side scoring",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Assessments"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/resources": {
+      "get": {
+        "operationId": "ResourcesController_getResources",
+        "summary": "List published resources with search and category filters",
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Resources"
+        ]
+      }
+    },
+    "/v1/resources/{id}": {
+      "get": {
+        "operationId": "ResourcesController_getResource",
+        "summary": "Get resource detail metadata",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Resources"
+        ]
+      }
+    },
+    "/v1/resources/{id}/download-url": {
+      "get": {
+        "operationId": "ResourcesController_getDownloadUrl",
+        "summary": "Get authorized short-lived download URL",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Resources"
+        ]
+      }
+    },
+    "/v1/circle/groups": {
+      "get": {
+        "operationId": "CircleController_getGroups",
+        "summary": "List public/joined circle groups",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Circle"
+        ]
+      }
+    },
+    "/v1/circle/feed": {
+      "get": {
+        "operationId": "CircleController_getFeed",
+        "summary": "Get community feed posts based on visibility permissions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Circle"
+        ]
+      }
+    },
+    "/v1/circle/groups/{id}/join": {
+      "post": {
+        "operationId": "CircleController_joinGroup",
+        "summary": "Join a circle group (registered user)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Circle"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/circle/groups/{id}/leave": {
+      "post": {
+        "operationId": "CircleController_leaveGroup",
+        "summary": "Leave a circle group",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Circle"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/circle/posts": {
+      "post": {
+        "operationId": "CircleController_createPost",
+        "summary": "Create a post in a joined group",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePostDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Circle"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/me": {
+      "get": {
+        "operationId": "MeController_getProfile",
+        "summary": "Get profile and summary (limited for guests, full for registered)",
+        "parameters": [
+          {
+            "name": "X-Guest-Ref",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Me"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "MeController_updateProfile",
+        "summary": "Update profile and notification preferences",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Me"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/me/history": {
+      "get": {
+        "operationId": "MeController_getHistory",
+        "summary": "Get learning history (tips, videos, assessments, events)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Me"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/me/progress": {
+      "get": {
+        "operationId": "MeController_getProgress",
+        "summary": "Get authoritative Confy points and level",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Me"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/courses/mine": {
+      "get": {
+        "operationId": "CoursesController_getMyCourses",
+        "summary": "Get enrolled courses, modules, stages, and progress",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Courses"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/courses/{id}": {
+      "get": {
+        "operationId": "CoursesController_getCourse",
+        "summary": "Get course curriculum and details",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Courses"
+        ]
+      }
+    },
+    "/v1/courses/{id}/enrol": {
+      "post": {
+        "operationId": "CoursesController_enrol",
+        "summary": "Enrol in a course",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Courses"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/stages/{id}": {
+      "get": {
+        "operationId": "CoursesController_getStage",
+        "summary": "Get stage requirements and completion criteria",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Courses"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/v1/stages/{id}/progress": {
+      "post": {
+        "operationId": "CoursesController_recordStageProgress",
+        "summary": "Record completion of a course stage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Courses"
+        ],
+        "security": [
+          {
+            "access-token": []
+          }
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "HealthController_getHealth",
+        "summary": "Liveness probe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/ready": {
+      "get": {
+        "operationId": "HealthController_getReady",
+        "summary": "Readiness probe (checks DB and Redis)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Health"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "ConfCircle API",
+    "description": "ConfCircle — Learning & Community App API",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "access-token": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      },
+      "guest-ref": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Guest-Ref"
+      },
+      "idempotency-key": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Idempotency-Key"
+      }
+    },
+    "schemas": {
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "password123",
+            "minLength": 8
+          },
+          "name": {
+            "type": "string",
+            "example": "Alex Morgan"
+          },
+          "guestRef": {
+            "type": "string",
+            "example": "guest-uuid-1234"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "name"
+        ]
+      },
+      "AuthResponseDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          },
+          "user": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "accessToken",
+          "refreshToken",
+          "user"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "password123"
+          },
+          "guestRef": {
+            "type": "string",
+            "example": "guest-uuid-1234"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "RefreshTokenDto": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "example": "refresh-token-xyz"
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "CreateGuestSessionDto": {
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "description": "Client-generated temporary device or install identifier"
+          }
+        }
+      },
+      "GuestSessionResponseDto": {
+        "type": "object",
+        "properties": {
+          "guestRef": {
+            "type": "string",
+            "description": "Opaque guest reference token"
+          },
+          "expiresAt": {
+            "type": "number",
+            "description": "Unix timestamp in ms when session expires"
+          },
+          "quotaRemaining": {
+            "type": "number",
+            "description": "Total quick tip quota granted for session"
+          }
+        },
+        "required": [
+          "guestRef",
+          "expiresAt",
+          "quotaRemaining"
+        ]
+      },
+      "VideoProgressDto": {
+        "type": "object",
+        "properties": {
+          "positionSec": {
+            "type": "number",
+            "example": 45,
+            "description": "Current playback position in seconds"
+          }
+        },
+        "required": [
+          "positionSec"
+        ]
+      },
+      "SaveAnswerDto": {
+        "type": "object",
+        "properties": {
+          "questionId": {
+            "type": "string"
+          },
+          "selectedOptionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "questionId",
+          "selectedOptionId"
+        ]
+      },
+      "CreatePostDto": {
+        "type": "object",
+        "properties": {
+          "groupId": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "group",
+              "public"
+            ],
+            "default": "group"
+          }
+        },
+        "required": [
+          "groupId",
+          "content"
+        ]
+      },
+      "UpdateProfileDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string"
+          },
+          "notificationConsentEmail": {
+            "type": "boolean"
+          },
+          "notificationConsentWhatsapp": {
+            "type": "boolean"
+          },
+          "optOutEmail": {
+            "type": "boolean"
+          },
+          "optOutWhatsapp": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

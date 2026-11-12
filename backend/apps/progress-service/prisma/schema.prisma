@@ -1,0 +1,83 @@
+// ==========================================================================
+// DRAFT SCHEMA — NOT APPROVED FOR PRODUCTION MIGRATIONS (Phase 5)
+//
+// The original ConfCircle DBML schema was not present in the repository
+// (see backend/docs/decisions/0001-sourcing-models.md). These models are
+// a minimal draft derived from the progress service's stated
+// responsibilities. userId/videoId/topicId are plain UUID references
+// (no cross-service FKs — other services own those entities).
+// ==========================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PROGRESS_DATABASE_URL")
+}
+
+model VideoProgress {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @db.Uuid
+  videoId         String   @db.Uuid
+  topicId         String   @db.Uuid
+  positionSeconds Int
+  durationSeconds Int
+  completedAt     DateTime?
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, videoId])
+  @@index([userId, updatedAt])
+}
+
+model TopicProgress {
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String    @db.Uuid
+  topicId           String    @db.Uuid
+  completionPercent Int       @default(0)
+  completedAt       DateTime?
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([userId, topicId])
+  @@index([userId, updatedAt])
+}
+
+model ActivityEvent {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @db.Uuid
+  // Event type, e.g. quick_tip_consumed | video_watched | assessment_completed
+  eventType   String
+  // JSON payload with references to entities owned by other services.
+  payload     Json
+  occurredAt  DateTime @default(now())
+
+  @@index([userId, occurredAt])
+  @@index([eventType])
+}
+
+model DailyStat {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @db.Uuid
+  date             DateTime @db.Date
+  questionsAnswered Int     @default(0)
+  videosWatched    Int      @default(0)
+  topicsCompleted  Int      @default(0)
+  quickTipsConsumed Int     @default(0)
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+// Transactional outbox (Phase 6) — events tied to DB writes are recorded
+// in the same transaction, then relayed by the publisher.
+model OutboxEvent {
+  id           String    @id @default(uuid()) @db.Uuid
+  eventType    String
+  routingKey   String
+  payload      Json
+  processedAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([processedAt])
+}

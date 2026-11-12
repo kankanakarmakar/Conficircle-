@@ -1,0 +1,13 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+.env
+.env.local
+.env.*.local
+
+prisma/migrations/**/migration_lock.toml.bak
+*.log
+.DS_Store
+My docs
