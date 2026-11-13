@@ -495,3 +495,4 @@ class _ActivityTile extends StatelessWidget {
     );
   }
 }
+

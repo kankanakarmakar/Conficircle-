@@ -14,8 +14,7 @@ import '../theme/app_typography.dart';
 /// 3. Circle ([[COMMUNITY_TAB_NAME]]) - Connect and participate
 /// 4. Me - Personal growth record, scores, and settings
 ///
-/// NOTE (OD-01): The Resources tab has been integrated directly into ConfiZone
-/// as a dedicated library sub-section in accordance with the 4-tab product specification.
+/// Styled with Duolingo-grade high-contrast tactile navigation.
 class MainShell extends StatefulWidget {
   final int initialIndex;
   const MainShell({super.key, this.initialIndex = 0});
@@ -57,7 +56,7 @@ class _MainShellState extends State<MainShell> {
       'label': 'Circle',
       'icon': Icons.groups_outlined,
       'activeIcon': Icons.groups_rounded,
-      'hasBadge': true, // Community notification indicator
+      'hasBadge': true,
     },
     {
       'label': 'Me',
@@ -82,16 +81,16 @@ class _MainShellState extends State<MainShell> {
         children: _screens,
       ),
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: AppColors.white,
-          border: const Border(
-            top: BorderSide(color: AppColors.lightGrey, width: 1.0),
+          border: Border(
+            top: BorderSide(color: Color(0xFFE4E8F0), width: 2.0),
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.black.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, -3),
+              color: Color(0xFFE4E8F0),
+              offset: Offset(0, -3),
+              blurRadius: 0, // Sharp crisp bevel line per Duolingo design
             ),
           ],
         ),
@@ -113,12 +112,12 @@ class _MainShellState extends State<MainShell> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Animated top active bar
+                        // Active Top Bevel
                         AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
+                          duration: const Duration(milliseconds: 180),
                           curve: Curves.easeOutCubic,
                           height: 3,
-                          width: isActive ? 24 : 0,
+                          width: isActive ? 28 : 0,
                           margin: const EdgeInsets.only(bottom: 6),
                           decoration: BoxDecoration(
                             color: AppColors.coral,
@@ -131,8 +130,8 @@ class _MainShellState extends State<MainShell> {
                           clipBehavior: Clip.none,
                           children: [
                             AnimatedScale(
-                              scale: isActive ? 1.08 : 1.0,
-                              duration: const Duration(milliseconds: 180),
+                              scale: isActive ? 1.12 : 1.0,
+                              duration: const Duration(milliseconds: 160),
                               curve: Curves.easeOutBack,
                               child: Icon(
                                 isActive
@@ -149,9 +148,10 @@ class _MainShellState extends State<MainShell> {
                                 child: Container(
                                   width: 8,
                                   height: 8,
-                                  decoration: const BoxDecoration(
+                                  decoration: BoxDecoration(
                                     color: AppColors.coral,
                                     shape: BoxShape.circle,
+                                    border: Border.all(color: AppColors.white, width: 1.5),
                                   ),
                                 ),
                               ),
@@ -160,13 +160,14 @@ class _MainShellState extends State<MainShell> {
 
                         const SizedBox(height: 3),
 
-                        // Label (animated text color & weight)
+                        // Label
                         AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 180),
+                          duration: const Duration(milliseconds: 160),
                           style: AppTypography.montserrat(
                             fontSize: 10,
-                            fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                            fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
                             color: isActive ? AppColors.coral : AppColors.darkGrey,
+                            letterSpacing: 0.2,
                           ),
                           child: Text(item['label'] as String),
                         ),

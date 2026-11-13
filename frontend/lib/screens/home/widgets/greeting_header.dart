@@ -17,58 +17,75 @@ class GreetingHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!isFirst) {
-      // Returning user greeting with streak badge
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
+      // Returning user greeting with Duolingo-style status capsule pills
+      final firstName = user.name.isNotEmpty ? user.name.split(' ').first : 'there';
+
+      return Container(
+        color: AppColors.white,
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${user.greeting}, ${user.name.split(' ').first}',
+            // Top Status Capsule Strip (Duolingo Header System)
+            Row(
+              children: [
+                _StatusPill(
+                  icon: '⚡',
+                  label: '5',
+                  color: const Color(0xFFFF9600), // Amber fire
+                  tooltip: 'Daily streak',
+                ),
+                const SizedBox(width: 8),
+                _StatusPill(
+                  icon: '💎',
+                  label: '${user.confiPoints}',
+                  color: AppColors.blue,
+                  tooltip: 'ConfiPoints',
+                ),
+                const SizedBox(width: 8),
+                _StatusPill(
+                  icon: '🎯',
+                  label: 'CL ${user.confiLevel}',
+                  color: AppColors.coral,
+                  tooltip: 'ConfiLevel',
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.softGrey,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.lightGrey, width: 1.5),
+                  ),
+                  child: Text(
+                    user.confiLevelShort,
                     style: AppTypography.montserrat(
-                      fontSize: 20,
+                      fontSize: 10,
                       fontWeight: FontWeight.w700,
                       color: AppColors.blue,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Here is your personal growth radar for today',
-                    style: AppTypography.body(
-                      fontSize: 13,
-                      color: AppColors.darkGrey,
-                    ),
-                  ),
-                ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            // Greeting line
+            Text(
+              'Welcome back, $firstName!',
+              style: AppTypography.montserrat(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: AppColors.blue,
+                letterSpacing: -0.3,
               ),
             ),
-            // Streak badge pill
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.softGrey,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.lightGrey, width: 1),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('⚡', style: TextStyle(fontSize: 13)),
-                  const SizedBox(width: 4),
-                  Text(
-                    'CL ${user.confiLevel} Focus',
-                    style: AppTypography.montserrat(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.blue,
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 2),
+            Text(
+              'What do you want to explore or strengthen today?',
+              style: AppTypography.body(
+                fontSize: 13,
+                color: AppColors.darkGrey,
               ),
             ),
           ],
@@ -77,37 +94,29 @@ class GreetingHeader extends StatelessWidget {
     }
 
     // First-time user greeting
+    final firstName = user.name.isNotEmpty ? user.name.split(' ').first : '';
     return Container(
       width: double.infinity,
       color: AppColors.white,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            user.greeting,
-            style: AppTypography.montserrat(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: AppColors.blue,
-            ),
-          ),
-          const SizedBox(height: 4),
           RichText(
             text: TextSpan(
               children: [
                 TextSpan(
-                  text: 'Welcome to ',
+                  text: firstName.isNotEmpty ? 'Hey $firstName! ' : 'Welcome! ',
                   style: AppTypography.montserrat(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
                     color: AppColors.blue,
                   ),
                 ),
                 TextSpan(
-                  text: 'ConfiCircle',
+                  text: 'Ready to grow?',
                   style: AppTypography.montserrat(
-                    fontSize: 18,
+                    fontSize: 22,
                     fontWeight: FontWeight.w800,
                     color: AppColors.coral,
                   ),
@@ -115,12 +124,59 @@ class GreetingHeader extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
-            'Discover what matters to you. Build confidence at your own pace.',
+            'Explore what matters to you without pressure or fixed routes.',
             style: AppTypography.body(
-              fontSize: 14,
+              fontSize: 13,
               color: AppColors.darkGrey,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  final String icon;
+  final String label;
+  final Color color;
+  final String tooltip;
+
+  const _StatusPill({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.tooltip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE4E8F0), width: 1.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0xFFE4E8F0),
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 13)),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: AppTypography.montserrat(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: color,
             ),
           ),
         ],

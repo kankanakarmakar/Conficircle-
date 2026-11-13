@@ -346,3 +346,4 @@ class _MiniStatusBadge extends StatelessWidget {
     return const SizedBox.shrink();
   }
 }
+
