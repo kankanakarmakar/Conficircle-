@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/confi_score.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
+import '../../core/widgets/tactile_button.dart';
 import '../me/widgets/confi_score_widget.dart';
 import '../main_shell.dart';
 
@@ -169,64 +170,29 @@ class AssessmentResultScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // CTA buttons
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                  // CTA buttons (Duolingo Tactile 3D Buttons)
+                  TactileButton.primary(
+                    text: 'EXPLORE CONFIZONE',
+                    onPressed: () {
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                          builder: (_) => const MainShell(initialIndex: 1),
                         ),
-                      ),
-                      onPressed: () {
-                        // Clear stack and go to the returning-user main shell
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                            builder: (_) => const MainShell(),
-                          ),
-                          (route) => false,
-                        );
-                      },
-                      child: Text(
-                        'Start Exploring! 🚀',
-                        style: AppTypography.montserrat(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.white,
-                        ),
-                      ),
-                    ),
+                        (route) => false,
+                      );
+                    },
                   ),
                   const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(color: AppColors.blue),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                  TactileButton.secondary(
+                    text: 'VIEW MY PROFILE',
+                    onPressed: () {
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                          builder: (_) => const MainShell(initialIndex: 3),
                         ),
-                      ),
-                      onPressed: () {
-                        // Go to MainShell — user can switch to the Me tab there
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                            builder: (_) => const MainShell(initialIndex: 4),
-                          ),
-                          (route) => false,
-                        );
-                      },
-                      child: Text(
-                        'View My Profile',
-                        style: AppTypography.montserrat(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.blue,
-                        ),
-                      ),
-                    ),
+                        (route) => false,
+                      );
+                    },
                   ),
                   const SizedBox(height: 40),
                 ],

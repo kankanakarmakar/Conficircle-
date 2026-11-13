@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
 
 /// Duolingo-grade Tactile Interactive Card.
-/// Features high-contrast border and bottom extrusion that depresses on press.
+/// Features high-contrast border and bottom bevel extrusion that depresses on press.
 class TactileCard extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
@@ -34,8 +34,8 @@ class TactileCard extends StatefulWidget {
     required this.child,
     this.onTap,
     this.backgroundColor = const Color(0xFF173883),
-    this.borderColor = const Color(0xFF2258C5),
-    this.bevelColor = const Color(0xFF0F2459),
+    this.borderColor = const Color(0xFF2E5CB8),
+    this.bevelColor = const Color(0xFF0D2254),
     this.depth = 4.0,
     this.borderRadius = 20.0,
     this.padding = const EdgeInsets.all(18.0),
@@ -75,30 +75,37 @@ class _TactileCardState extends State<TactileCard> {
 
     return Container(
       margin: widget.margin,
-      child: GestureDetector(
-        onTapDown: widget.onTap != null ? _handleTapDown : null,
-        onTapUp: widget.onTap != null ? _handleTapUp : null,
-        onTapCancel: widget.onTap != null ? _handleTapCancel : null,
-        behavior: HitTestBehavior.opaque,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 60),
-          curve: Curves.easeOut,
-          transform: Matrix4.translationValues(0, currentOffset, 0),
-          decoration: BoxDecoration(
-            color: widget.backgroundColor,
-            borderRadius: BorderRadius.circular(widget.borderRadius),
-            border: Border(
-              top: BorderSide(color: widget.borderColor, width: 2),
-              left: BorderSide(color: widget.borderColor, width: 2),
-              right: BorderSide(color: widget.borderColor, width: 2),
-              bottom: BorderSide(color: widget.bevelColor, width: currentBottom + 2),
+      child: Padding(
+        padding: EdgeInsets.only(bottom: depth),
+        child: GestureDetector(
+          onTapDown: widget.onTap != null ? _handleTapDown : null,
+          onTapUp: widget.onTap != null ? _handleTapUp : null,
+          onTapCancel: widget.onTap != null ? _handleTapCancel : null,
+          behavior: HitTestBehavior.opaque,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 60),
+            curve: Curves.easeOut,
+            transform: Matrix4.translationValues(0, currentOffset, 0),
+            decoration: BoxDecoration(
+              color: widget.backgroundColor,
+              borderRadius: BorderRadius.circular(widget.borderRadius),
+              border: Border.all(
+                color: widget.borderColor,
+                width: 2.0,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: widget.bevelColor,
+                  offset: Offset(0, currentBottom),
+                  blurRadius: 0, // Sharp 3D tactile bevel
+                ),
+              ],
             ),
+            padding: widget.padding,
+            child: widget.child,
           ),
-          padding: widget.padding,
-          child: widget.child,
         ),
       ),
     );
   }
 }
-

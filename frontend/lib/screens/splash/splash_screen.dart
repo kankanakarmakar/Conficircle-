@@ -1,54 +1,21 @@
 // lib/screens/splash/splash_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
+import '../../core/widgets/tactile_button.dart';
 
-class SplashScreen extends StatefulWidget {
-  final VoidCallback onComplete;
-  const SplashScreen({super.key, required this.onComplete});
+/// Duolingo-Grade Splash / Welcome Screen (Marvilo Kit Frame 1)
+/// Features bold typography, student growth radar badge, and tactile 3D buttons.
+class SplashScreen extends StatelessWidget {
+  final VoidCallback onGetStarted;
+  final VoidCallback onAlreadyHaveAccount;
 
-  @override
-  State<SplashScreen> createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends State<SplashScreen>
-    with TickerProviderStateMixin {
-  late AnimationController _logoController;
-  late AnimationController _textController;
-  late AnimationController _loadingController;
-  late Animation<double> _logoOpacity;
-  late Animation<double> _logoScale;
-  late Animation<double> _textOpacity;
-  late Animation<double> _loadingProgress;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _logoController = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
-    _textController = AnimationController(vsync: this, duration: const Duration(milliseconds: 700));
-    _loadingController = AnimationController(vsync: this, duration: const Duration(milliseconds: 2200));
-
-    _logoOpacity = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _logoController, curve: Curves.easeOut));
-    _logoScale = Tween(begin: 0.7, end: 1.0).animate(CurvedAnimation(parent: _logoController, curve: Curves.elasticOut));
-    _textOpacity = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _textController, curve: Curves.easeIn));
-    _loadingProgress = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _loadingController, curve: Curves.easeInOut));
-
-    _logoController.forward().then((_) {
-      _textController.forward();
-      _loadingController.forward().then((_) {
-        Future.delayed(const Duration(milliseconds: 300), widget.onComplete);
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _logoController.dispose();
-    _textController.dispose();
-    _loadingController.dispose();
-    super.dispose();
-  }
+  const SplashScreen({
+    super.key,
+    required this.onGetStarted,
+    required this.onAlreadyHaveAccount,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -56,354 +23,185 @@ class _SplashScreenState extends State<SplashScreen>
 
     return Scaffold(
       backgroundColor: AppColors.white,
-      body: Stack(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Column(
+            children: [
+              const SizedBox(height: 16),
+
+              // Brand Wordmark
+              RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'Confi',
+                      style: AppTypography.montserrat(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.blue,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    TextSpan(
+                      text: 'Circle',
+                      style: AppTypography.montserrat(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.coral,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const Spacer(flex: 1),
+
+              // Geometric Growth Radar Badge (Strictly NO mascots / figures)
+              Container(
+                width: 160,
+                height: 160,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFFF0F4FD),
+                  border: Border.all(color: const Color(0xFFD4E1FB), width: 3),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0xFFD4E1FB),
+                      offset: Offset(0, 6),
+                      blurRadius: 0,
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.coral.withOpacity(0.3), width: 2),
+                        ),
+                      ),
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.blue.withOpacity(0.08),
+                          border: Border.all(color: AppColors.blue.withOpacity(0.4), width: 2),
+                        ),
+                      ),
+                      const Icon(
+                        Icons.track_changes_rounded,
+                        size: 54,
+                        color: AppColors.blue,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              // Headline & Value Proposition
+              Text(
+                'Discover, Grow\n& Succeed',
+                textAlign: TextAlign.center,
+                style: AppTypography.montserrat(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.blue,
+                  height: 1.15,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'The self-directed student growth platform.\nExplore 4 pillars, build real confidence, and achieve your goals.',
+                textAlign: TextAlign.center,
+                style: AppTypography.body(
+                  fontSize: 14,
+                  color: AppColors.darkGrey,
+                  height: 1.4,
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // 3 Pillars preview capsules
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _FeaturePill(icon: '🧭', text: '4 Pillars'),
+                  const SizedBox(width: 8),
+                  _FeaturePill(icon: '🎯', text: 'ConfiScore'),
+                  const SizedBox(width: 8),
+                  _FeaturePill(icon: '⚡', text: 'Daily Habit'),
+                ],
+              ),
+
+              const Spacer(flex: 2),
+
+              // Duolingo Tactile 3D Buttons (Marvilo Kit)
+              TactileButton.primary(
+                text: 'GET STARTED',
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  onGetStarted();
+                },
+              ),
+              const SizedBox(height: 12),
+              TactileButton.secondary(
+                text: 'I ALREADY HAVE AN ACCOUNT',
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  onAlreadyHaveAccount();
+                },
+              ),
+
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FeaturePill extends StatelessWidget {
+  final String icon;
+  final String text;
+
+  const _FeaturePill({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2F5FB),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE4E8F0), width: 1.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Decorative blob - top left blue
-          Positioned(
-            top: -60,
-            left: -60,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                color: AppColors.lightBlue.withOpacity(0.25),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          // Decorative blob - top right coral
-          Positioned(
-            top: -30,
-            right: -50,
-            child: Container(
-              width: 160,
-              height: 160,
-              decoration: BoxDecoration(
-                color: AppColors.coral.withOpacity(0.15),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          // Bottom hero image simulation
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              height: size.height * 0.38,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Color(0x66173883)],
-                ),
-              ),
-            ),
-          ),
-          // Bottom left decoration
-          Positioned(
-            bottom: -40,
-            left: -40,
-            child: Container(
-              width: 180,
-              height: 180,
-              decoration: BoxDecoration(
-                color: AppColors.blue.withOpacity(0.15),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          // Bottom right coral blob
-          Positioned(
-            bottom: 60,
-            right: -50,
-            child: Container(
-              width: 160,
-              height: 160,
-              decoration: BoxDecoration(
-                color: AppColors.coral.withOpacity(0.20),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-
-          // Right-side vertical text
-          Positioned(
-            right: 24,
-            top: size.height * 0.52,
-            child: AnimatedBuilder(
-              animation: _textOpacity,
-              builder: (_, __) => Opacity(
-                opacity: _textOpacity.value,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: ['EXPLORE', 'LEARN', 'CONNECT', 'ACHIEVE']
-                      .map((t) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 2),
-                            child: Text(
-                              t,
-                              style: AppTypography.montserrat(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.blue,
-                                letterSpacing: 2.5,
-                              ),
-                            ),
-                          ))
-                      .toList(),
-                ),
-              ),
-            ),
-          ),
-
-          // Top right tagline
-          Positioned(
-            top: 64,
-            right: 24,
-            child: AnimatedBuilder(
-              animation: _textOpacity,
-              builder: (_, __) => Opacity(
-                opacity: _textOpacity.value,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text('Students Today.',
-                        style: AppTypography.montserrat(
-                          fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.blue,
-                        )),
-                    Text('Leaders Tomorrow.',
-                        style: AppTypography.montserrat(
-                          fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.blue,
-                        )),
-                    const SizedBox(height: 4),
-                    Container(
-                      height: 2,
-                      width: 30,
-                      color: AppColors.coral,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // Bottom-left small text
-          Positioned(
-            bottom: 32,
-            left: 24,
-            child: AnimatedBuilder(
-              animation: _textOpacity,
-              builder: (_, __) => Opacity(
-                opacity: _textOpacity.value,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('COLLEGE STUDENTS.',
-                        style: AppTypography.montserrat(
-                          fontSize: 9, fontWeight: FontWeight.w700,
-                          color: AppColors.white, letterSpacing: 2.0,
-                        )),
-                    Text('A BRIGHTER TOMORROW',
-                        style: AppTypography.montserrat(
-                          fontSize: 9, fontWeight: FontWeight.w700,
-                          color: AppColors.white, letterSpacing: 2.0,
-                        )),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // Main content
-          SafeArea(
-            child: Column(
-              children: [
-                const SizedBox(height: 60),
-                // Logo
-                AnimatedBuilder(
-                  animation: _logoController,
-                  builder: (_, __) => Opacity(
-                    opacity: _logoOpacity.value,
-                    child: Transform.scale(
-                      scale: _logoScale.value,
-                      child: _ConfiCircleLogo(),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 48),
-                // Handwritten tagline
-                AnimatedBuilder(
-                  animation: _textOpacity,
-                  builder: (_, __) => Opacity(
-                    opacity: _textOpacity.value,
-                    child: Column(
-                      children: [
-                        Text(
-                          'A brighter you',
-                          style: AppTypography.caveat(
-                            fontSize: 36,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.blue,
-                          ),
-                        ),
-                        RichText(
-                          text: TextSpan(children: [
-                            TextSpan(
-                              text: 'for a ',
-                              style: AppTypography.caveat(
-                                fontSize: 36, fontWeight: FontWeight.w600, color: AppColors.blue,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'bigger tomorrow.',
-                              style: AppTypography.caveat(
-                                fontSize: 36, fontWeight: FontWeight.w700, color: AppColors.coral,
-                              ),
-                            ),
-                          ]),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 60),
-                // Loading spinner
-                AnimatedBuilder(
-                  animation: _loadingProgress,
-                  builder: (_, __) => Opacity(
-                    opacity: _loadingProgress.value.clamp(0.0, 1.0),
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          width: 32,
-                          height: 32,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.blue.withOpacity(0.5)),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Creating your space...',
-                          style: AppTypography.bodySmall.copyWith(color: AppColors.darkGrey),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+          Text(icon, style: const TextStyle(fontSize: 12)),
+          const SizedBox(width: 5),
+          Text(
+            text,
+            style: AppTypography.montserrat(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppColors.blue,
             ),
           ),
         ],
       ),
     );
   }
-}
-
-class _ConfiCircleLogo extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Logo mark
-        SizedBox(
-          width: 90,
-          height: 90,
-          child: Stack(
-            children: [
-              // C shape
-              Container(
-                width: 90,
-                height: 90,
-                decoration: BoxDecoration(
-                  gradient: AppColors.primaryGradient,
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Container(
-                    width: 68,
-                    height: 68,
-                    decoration: const BoxDecoration(
-                      color: AppColors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: CustomPaint(
-                        size: const Size(42, 42),
-                        painter: _CPainter(),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              // Coral dot
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Container(
-                  width: 14,
-                  height: 14,
-                  decoration: const BoxDecoration(
-                    color: AppColors.coral,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        // Text logo
-        RichText(
-          text: TextSpan(children: [
-            TextSpan(
-              text: 'Confi',
-              style: AppTypography.montserrat(
-                fontSize: 34, fontWeight: FontWeight.w800, color: AppColors.blue,
-              ),
-            ),
-            TextSpan(
-              text: 'Circle',
-              style: AppTypography.montserrat(
-                fontSize: 34, fontWeight: FontWeight.w800, color: AppColors.blue,
-              ),
-            ),
-          ]),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Discover. Grow. Belong.',
-          style: AppTypography.montserrat(
-            fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.darkGrey,
-            letterSpacing: 1.5,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.blue
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6
-      ..strokeCap = StrokeCap.round;
-
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width * 0.42;
-
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      0.5,
-      4.8,
-      false,
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_CPainter oldDelegate) => false;
 }

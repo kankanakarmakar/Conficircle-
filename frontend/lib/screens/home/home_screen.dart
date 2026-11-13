@@ -1,11 +1,14 @@
 // lib/screens/home/home_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/recommendation_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../core/widgets/unit_section_banner.dart';
+import '../../core/widgets/streak_bottom_sheet.dart';
+import '../../core/widgets/shop_bottom_sheet.dart';
 import 'widgets/greeting_header.dart';
 import 'widgets/current_situation.dart';
 import 'widgets/search_bar_widget.dart';
@@ -56,40 +59,77 @@ class _HomeScreenState extends State<HomeScreen> {
       body: CustomScrollView(
         controller: _scrollController,
         slivers: [
-          // Sticky Top Bar
+          // Sticky Duolingo-Grade Top Status Capsule Bar (Marvilo Kit Homescreen)
           SliverAppBar(
             pinned: true,
             elevation: 0,
             backgroundColor: AppColors.white,
-            title: RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: 'Confi',
-                    style: AppTypography.montserrat(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.blue,
-                      letterSpacing: -0.5,
-                    ),
+            toolbarHeight: 62,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(2),
+              child: Container(color: const Color(0xFFE4E8F0), height: 2),
+            ),
+            title: Row(
+              children: [
+                // Wordmark
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'Confi',
+                        style: AppTypography.montserrat(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.blue,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      TextSpan(
+                        text: 'Circle',
+                        style: AppTypography.montserrat(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.coral,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ],
                   ),
-                  TextSpan(
-                    text: 'Circle',
-                    style: AppTypography.montserrat(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.coral,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+                const Spacer(),
+
+                // Streak Capsule (Tappable -> Streak Sheet)
+                _StatusCapsule(
+                  icon: '⚡',
+                  label: '5',
+                  color: const Color(0xFFFF9600),
+                  onTap: () => showStreakBottomSheet(context),
+                ),
+                const SizedBox(width: 6),
+
+                // ConfiPoints Capsule (Tappable -> Shop Sheet)
+                _StatusCapsule(
+                  icon: '💎',
+                  label: '${user.confiPoints}',
+                  color: AppColors.blue,
+                  onTap: () => showShopBottomSheet(context, user.confiPoints),
+                ),
+                const SizedBox(width: 6),
+
+                // ConfiScore Capsule
+                _StatusCapsule(
+                  icon: '🎯',
+                  label: '${user.confiScore}',
+                  color: AppColors.coral,
+                  onTap: () {},
+                ),
+                const SizedBox(width: 8),
+
+                // Monogram Avatar
+                _AvatarButton(name: user.name),
+              ],
             ),
             centerTitle: false,
-            actions: [
-              _AvatarButton(name: user.name),
-              const SizedBox(width: 16),
-            ],
           ),
 
           // ── FIRST-TIME USER FLOW (Blueprint §7: Exactly 11 sections) ────────
@@ -150,7 +190,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. Personalized greeting + Status capsules
+                  // 1. Personalized greeting
                   GreetingHeader(user: user, isFirst: false),
 
                   // 2. Your Current Situation (Score, Level, 3 Focus Bars, Add, Reassess, Share)
@@ -214,6 +254,60 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+class _StatusCapsule extends StatelessWidget {
+  final String icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _StatusCapsule({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE4E8F0), width: 1.5),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0xFFE4E8F0),
+              offset: Offset(0, 2),
+              blurRadius: 0,
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(icon, style: const TextStyle(fontSize: 12)),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: AppTypography.montserrat(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _AvatarButton extends StatelessWidget {
   final String name;
   const _AvatarButton({required this.name});
@@ -222,8 +316,8 @@ class _AvatarButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'A';
     return Container(
-      width: 36,
-      height: 36,
+      width: 32,
+      height: 32,
       decoration: BoxDecoration(
         color: AppColors.blue,
         shape: BoxShape.circle,
@@ -233,7 +327,7 @@ class _AvatarButton extends StatelessWidget {
         child: Text(
           initial,
           style: AppTypography.montserrat(
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: FontWeight.w800,
             color: AppColors.white,
           ),

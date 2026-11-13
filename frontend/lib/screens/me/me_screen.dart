@@ -6,6 +6,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../core/widgets/tactile_card.dart';
 import '../assessment/assessment_screen.dart';
+import '../onboarding/onboarding_screen.dart';
 
 /// Profile & Progress Screen (Blueprint §16 / Marvilo Duolingo Profile)
 /// Features 2x2 statistics grid, achievements list with progress bars, and personal records.
@@ -249,6 +250,58 @@ class MeScreen extends StatelessWidget {
                         ),
                         Text(
                           'Refresh your radar & calibrate Level',
+                          style: AppTypography.body(fontSize: 11, color: AppColors.darkGrey),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.blue),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Onboarding Replay Action
+            TactileCard(
+              backgroundColor: AppColors.white,
+              borderColor: const Color(0xFFE4E8F0),
+              bevelColor: const Color(0xFFD0D7E5),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => OnboardingScreen(
+                      onComplete: () => Navigator.of(context).pop(),
+                      onBackToWelcome: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                );
+              },
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF0EE),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.school_rounded, color: AppColors.coral, size: 20),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Replay 5-Step Onboarding',
+                          style: AppTypography.montserrat(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.blue,
+                          ),
+                        ),
+                        Text(
+                          'Walk through goals, commitment & starting preferences',
                           style: AppTypography.body(fontSize: 11, color: AppColors.darkGrey),
                         ),
                       ],

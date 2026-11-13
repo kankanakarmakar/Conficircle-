@@ -3,35 +3,25 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 
-/// Duolingo-style Section / Focus Banner.
-/// Replicates the famous Duolingo Unit Header: bold colored background,
-/// section label, unit title, and a tactile "Guidebook" icon button on the right.
+/// Duolingo Signature Unit / Section Header Banner.
+/// Features a colored header block with 3D bottom bevel,
+/// section indicator, unit title, and guidebook button.
 class UnitSectionBanner extends StatelessWidget {
   final String sectionNumber;
   final String title;
   final String subtitle;
+  final VoidCallback onGuidebookTap;
   final Color backgroundColor;
   final Color borderColor;
-  final VoidCallback? onGuidebookTap;
 
   const UnitSectionBanner({
     super.key,
-    this.sectionNumber = 'SECTION 1',
+    required this.sectionNumber,
     required this.title,
     required this.subtitle,
+    required this.onGuidebookTap,
     this.backgroundColor = const Color(0xFF173883),
-    this.borderColor = const Color(0xFF0F2459),
-    this.onGuidebookTap,
-  });
-
-  const UnitSectionBanner.coral({
-    super.key,
-    this.sectionNumber = 'ACTIVE FOCUS',
-    required this.title,
-    required this.subtitle,
-    this.backgroundColor = AppColors.coral,
-    this.borderColor = const Color(0xFFC02A16),
-    this.onGuidebookTap,
+    this.borderColor = const Color(0xFF0D2254),
   });
 
   @override
@@ -41,12 +31,17 @@ class UnitSectionBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border(
-          top: BorderSide(color: Colors.white.withOpacity(0.2), width: 1.5),
-          left: BorderSide(color: Colors.white.withOpacity(0.2), width: 1.5),
-          right: BorderSide(color: Colors.white.withOpacity(0.2), width: 1.5),
-          bottom: BorderSide(color: borderColor, width: 4.0),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: borderColor,
+            offset: const Offset(0, 4),
+            blurRadius: 0, // Sharp 3D tactile bevel
+          ),
+        ],
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
@@ -95,12 +90,17 @@ class UnitSectionBanner extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.18),
                 borderRadius: BorderRadius.circular(14),
-                border: Border(
-                  top: BorderSide(color: Colors.white.withOpacity(0.3), width: 1),
-                  left: BorderSide(color: Colors.white.withOpacity(0.3), width: 1),
-                  right: BorderSide(color: Colors.white.withOpacity(0.3), width: 1),
-                  bottom: BorderSide(color: Colors.black.withOpacity(0.2), width: 3),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.3),
+                  width: 1,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    offset: const Offset(0, 3),
+                    blurRadius: 0,
+                  ),
+                ],
               ),
               child: const Icon(
                 Icons.menu_book_rounded,

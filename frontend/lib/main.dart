@@ -7,7 +7,6 @@ import 'providers/recommendation_provider.dart';
 import 'providers/analytics_provider.dart';
 import 'theme/app_theme.dart';
 import 'screens/splash/splash_screen.dart';
-import 'screens/auth/auth_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/main_shell.dart';
 
@@ -40,19 +39,10 @@ class ConfiCircleApp extends StatelessWidget {
   }
 }
 
-/// Root widget — manages the full app navigation flow.
-///
-/// Flow:
-///   Splash → Auth (Login / Sign Up)
-///     ├─ Sign Up (new user)  → Onboarding → MainShell
-///     │                         HomeScreen shows first-time layout
-///     │                         (6 cards + Discover My Confi + Tools + Did You Know)
-///     │                         After assessment → HomeScreen shows returning layout
-///     └─ Log In (existing)   → MainShell
-///                               HomeScreen shows returning-user full dashboard
-///
-/// [isFirstTime] stays true until [UserProvider.completeAssessment()] is called.
-/// The bottom nav bar (MainShell) is ALWAYS present after auth.
+/// Root widget — manages seamless navigation between:
+/// 1. Duolingo-Grade Welcome Screen (Marvilo Frame 1)
+/// 2. Duolingo-Grade 5-Step Onboarding (Marvilo Frames 2 to 12)
+/// 3. Main 4-Tab Shell (Home, ConfiZone, Circle, Me)
 class _AppRoot extends StatefulWidget {
   const _AppRoot();
 
@@ -60,41 +50,40 @@ class _AppRoot extends StatefulWidget {
   State<_AppRoot> createState() => _AppRootState();
 }
 
+enum AppFlowState {
+  welcome,
+  onboarding,
+  mainApp,
+}
+
 class _AppRootState extends State<_AppRoot> {
-  bool _splashDone = false;
-  bool _authDone = false;
-  bool _onboardingDone = false;
-  bool _isSignUp = false;
+  AppFlowState _state = AppFlowState.mainApp; // Default directly to full dashboard for instant exploration
 
   @override
   Widget build(BuildContext context) {
-    if (!_splashDone) {
-      return SplashScreen(
-        onComplete: () {
-          setState(() => _splashDone = true);
-        },
-      );
-    }
+    switch (_state) {
+      case AppFlowState.welcome:
+        return SplashScreen(
+          onGetStarted: () {
+            setState(() => _state = AppFlowState.onboarding);
+          },
+          onAlreadyHaveAccount: () {
+            setState(() => _state = AppFlowState.mainApp);
+          },
+        );
 
-    if (!_authDone) {
-      return AuthScreen(
-        onAuthComplete: () {
-          setState(() {
-            _authDone = true;
-            _onboardingDone = true;
-          });
-        },
-      );
-    }
+      case AppFlowState.onboarding:
+        return OnboardingScreen(
+          onComplete: () {
+            setState(() => _state = AppFlowState.mainApp);
+          },
+          onBackToWelcome: () {
+            setState(() => _state = AppFlowState.welcome);
+          },
+        );
 
-    if (_isSignUp && !_onboardingDone) {
-      return OnboardingScreen(
-        onComplete: () {
-          setState(() => _onboardingDone = true);
-        },
-      );
+      case AppFlowState.mainApp:
+        return const MainShell();
     }
-
-    return const MainShell();
   }
 }
