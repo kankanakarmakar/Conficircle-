@@ -33,7 +33,7 @@ async function bootstrap(): Promise<void> {
   );
 
   // Global exception handling (structured JSON, no stack traces)
-  app.useGlobalFilters(app.get(GlobalExceptionFilter));
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   // CORS — allowed origins come from CORS_ORIGINS (comma separated)
   app.enableCors({

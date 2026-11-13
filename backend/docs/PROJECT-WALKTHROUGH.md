@@ -30,7 +30,7 @@ Conceptually:
         │                │                │
  Identity             Content        Assessment   Progress
    │                    │                │            │
- identity_db        content_db       assessment_db  progress_db
+ identity            content          assessment     progress   (schemas)
 ```
 
 - Each "box" (service) is its **own full program** with its own HTTP
@@ -221,10 +221,10 @@ apps/<service-name>/
 | Service | Port | Purpose | Extra |
 | --- | --- | --- | --- |
 | `api-gateway` | 3000 | THE DOOR: Flutter only talks to this. Routes, guards, rate limits, Swagger `/docs`. | has `modules/proxy/` (dev-only relay until real controllers) |
-| `identity-service` | 3001 | users, email/password, tokens, refresh rotation, guest accounts | owns `identity_db` |
-| `content-service` | 3002 | topics, questions, quick tips, videos, resources, publication flow | owns `content_db` |
-| `assessment-service` | 3003 | assessments, attempts, responses, server-side scoring | owns `assessment_db`; scoring never leaks |
-| `progress-service` | 3004 | what users did: history, video position, daily stats, dashboards | owns `progress_db` |
+| `identity-service` | 3001 | users, email/password, tokens, refresh rotation, guest accounts | owns `identity` schema |
+| `content-service` | 3002 | topics, questions, quick tips, videos, resources, publication flow | owns `content` schema |
+| `assessment-service` | 3003 | assessments, attempts, responses, server-side scoring | owns `assessment` schema; scoring never leaks |
+| `progress-service` | 3004 | what users did: history, video position, daily stats, dashboards | owns `progress` schema |
 
 Why 5? Because they change at different rates and have different data:
 auth rarely changes but must be rock-solid; content CRUD is dynamic;
@@ -336,8 +336,9 @@ Each will have pattern: `*.module.ts`, `*.controller.ts` (HTTP routes),
 
 Prisma = the ORM. `schema.prisma` is the **single source of truth**
 listing tables. Generated client gives type-safe queries
-(`prisma.user.findMany()`). Ran per-service — one DB per service
-(Phase 5 rule), so identity can't query the content DB.
+(`prisma.user.findMany()`). Run per-service — all four now share ONE database
+(conficircle_db) but each owns its own PostgreSQL schema, so identity
+still can't query the content tables directly (schema isolation).
 
 The FILE ITSELF:
 

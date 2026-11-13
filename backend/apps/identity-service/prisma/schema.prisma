@@ -9,12 +9,18 @@
 // ==========================================================================
 
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
+  output     = "../src/generated/prisma-client"
+  // multiSchema is stable in usage but still a preview flag on Prisma 6.2.x
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("IDENTITY_DATABASE_URL")
+  // Shared single database (conficircle_db); this service only owns
+  // the "identity" PostgreSQL schema inside it.
+  url      = env("DATABASE_URL")
+  schemas  = ["identity"]
 }
 
 model User {
@@ -31,6 +37,7 @@ model User {
   refreshSessions RefreshSession[]
 
   @@index([createdAt])
+  @@schema("identity")
 }
 
 model RefreshSession {
@@ -48,11 +55,13 @@ model RefreshSession {
 
   @@index([userId])
   @@index([expiresAt])
+  @@schema("identity")
 }
 
 enum Role {
   user
   admin
+  @@schema("identity")
 }
 
 // Transactional outbox (Phase 6) — events tied to DB writes are recorded
@@ -66,6 +75,7 @@ model OutboxEvent {
   createdAt    DateTime  @default(now())
 
   @@index([processedAt])
+  @@schema("identity")
 }
 
 model GuestSession {
@@ -82,4 +92,5 @@ model GuestSession {
   convertedTo  String?   @db.Uuid
 
   @@index([expiresAt])
+  @@schema("identity")
 }

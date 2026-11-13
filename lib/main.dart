@@ -1,5 +1,6 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' as rp;
 import 'package:provider/provider.dart';
 import 'providers/user_provider.dart';
 import 'providers/recommendation_provider.dart';
@@ -11,7 +12,11 @@ import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/main_shell.dart';
 
 void main() {
-  runApp(const ConfiCircleApp());
+  runApp(
+    const rp.ProviderScope(
+      child: ConfiCircleApp(),
+    ),
+  );
 }
 
 class ConfiCircleApp extends StatelessWidget {
@@ -59,37 +64,37 @@ class _AppRootState extends State<_AppRoot> {
   bool _splashDone = false;
   bool _authDone = false;
   bool _onboardingDone = false;
+  bool _isSignUp = false;
 
   @override
   Widget build(BuildContext context) {
-    // 1. Splash
     if (!_splashDone) {
       return SplashScreen(
-        onComplete: () => setState(() => _splashDone = true),
+        onComplete: () {
+          setState(() => _splashDone = true);
+        },
       );
     }
 
-    // 2. Auth gate — Login or Sign Up
     if (!_authDone) {
       return AuthScreen(
-        onAuthComplete: () => setState(() => _authDone = true),
+        onAuthComplete: () {
+          setState(() {
+            _authDone = true;
+            _onboardingDone = true;
+          });
+        },
       );
     }
 
-    final userProvider = context.watch<UserProvider>();
-
-    // 3. Onboarding — only for new (first-time) users, once per install
-    if (!_onboardingDone && userProvider.isFirstTime) {
+    if (_isSignUp && !_onboardingDone) {
       return OnboardingScreen(
         onComplete: () {
-          userProvider.completeOnboarding();
           setState(() => _onboardingDone = true);
         },
       );
     }
 
-    // 4. Always show MainShell (has bottom nav).
-    //    HomeScreen inside it reads isFirstTime and shows the right layout.
     return const MainShell();
   }
 }

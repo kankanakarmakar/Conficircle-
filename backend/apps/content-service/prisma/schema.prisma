@@ -9,18 +9,25 @@
 // ==========================================================================
 
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
+  output     = "../src/generated/prisma-client"
+  // multiSchema is stable in usage but still a preview flag on Prisma 6.2.x
+  previewFeatures = ["multiSchema"]
 }
 
 enum DifficultyLevel {
   beginner
   intermediate
   advanced
+  @@schema("content")
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("CONTENT_DATABASE_URL")
+  // Shared single database (conficircle_db); this service only owns
+  // the "content" PostgreSQL schema inside it.
+  url      = env("DATABASE_URL")
+  schemas  = ["content"]
 }
 
 model Topic {
@@ -40,6 +47,7 @@ model Topic {
 
   @@index([isPublished, orderIndex])
   @@index([difficultyLevel])
+  @@schema("content")
 }
 
 model Question {
@@ -57,6 +65,7 @@ model Question {
 
   @@index([topicId, orderIndex])
   @@index([difficultyLevel])
+  @@schema("content")
 }
 
 model QuestionOption {
@@ -71,6 +80,7 @@ model QuestionOption {
   question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@index([questionId, orderIndex])
+  @@schema("content")
 }
 
 model QuickTip {
@@ -83,6 +93,7 @@ model QuickTip {
   topic Topic? @relation(fields: [topicId], references: [id], onDelete: SetNull)
 
   @@index([topicId])
+  @@schema("content")
 }
 
 model VideoResource {
@@ -97,6 +108,7 @@ model VideoResource {
   topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
   @@index([topicId])
+  @@schema("content")
 }
 
 model LearningResource {
@@ -110,6 +122,7 @@ model LearningResource {
   topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
   @@index([topicId])
+  @@schema("content")
 }
 
 // Topic-related event: content publication management
@@ -121,6 +134,7 @@ model ContentPublication {
   createdAt DateTime  @default(now())
 
   @@index([topicId, status])
+  @@schema("content")
 }
 
 // Transactional outbox (Phase 6) — events tied to DB writes are recorded
@@ -134,4 +148,5 @@ model OutboxEvent {
   createdAt    DateTime  @default(now())
 
   @@index([processedAt])
+  @@schema("content")
 }

@@ -1,26 +1,33 @@
-# Database Ownership Matrix (Draft)
+# Database Ownership Matrix (single-database, schema-isolated)
 
-Original business data model (DBML) was not available in the repository.
-Service ownership below was derived from the service responsibility
-definitions; model names are provisional.
+Original business data model (DBML) was not available in the repository
+(see docs/decisions/0001-sourcing-models.md). Model names are provisional.
+Since 2026-11-12 all services share ONE PostgreSQL database
+(`conficircle_db`) but own separate PostgreSQL **schemas**.
 
-| Database | Owner | Tables (draft) | Notes |
+| PostgreSQL schema | Owner service | Tables (draft) | Notes |
 | --- | --- | --- | --- |
-| identity_db | identity-service | users, refresh_sessions, guest_sessions | auth + guest conversion |
-| content_db | content-service | topics, questions, question_options, quick_tips, video_resources, learning_resources, content_publications | correctness data stays server-side |
-| assessment_db | assessment-service | assessments, assessment_questions, assessment_options, assessment_attempts, attempt_responses, outbox_event | server-side scoring only |
-| progress_db | progress-service | video_progress, topic_progress, activity_events, daily_stat | event-sourced-ish activity log |
-| — | api-gateway | none | routes, does not own data |
+| identity | identity-service | User, RefreshSession, GuestSession, OutboxEvent | auth + guest conversion |
+| content | content-service | Topic, Question, QuestionOption, QuickTip, VideoResource, LearningResource, ContentPublication, OutboxEvent | correctness data stays server-side |
+| assessment | assessment-service | Assessment, AssessmentQuestion, AssessmentOption, AssessmentAttempt, AttemptResponse, OutboxEvent | server-side scoring only |
+| progress | progress-service | VideoProgress, TopicProgress, ActivityEvent, DailyStat, OutboxEvent | activity log + stats |
+| (none) | api-gateway | none | routes; owns no data |
 
-Shared conventions (draft):
+Shared conventions:
 
-- UUID primary keys, `createdAt`/`updatedAt` timestamps.
-- Indexes on hot lookup paths (user + date/topic, published + order).
-- Unique constraints: user email, refresh token hash, (user, video),
-  (user, topic), (user, date), (user, assessment, startedAt).
-- Foreign keys only within a service.
-- Every domain DB hosts a `OutboxEvent` table (transactional outbox).
+- One database, four schemas; every model tagged `@@schema("<name>")`.
+- Each schema contains its own `OutboxEvent` (transactional outbox) and
+  its own `_prisma_migrations` history table.
+- UUID primary keys, createdAt/updatedAt timestamps, hot-path indexes,
+  unique constraints (user email, refresh token hash, user+video,
+  user+topic, user+date, user+assessment+startedAt).
+- Foreign keys only within the same schema; references to users in other
+  schemas are plain UUIDs enforced at the application layer.
+- Prisma clients are per-service, generated to each app's
+  `src/generated/prisma-client` (never shared).
+- Roles: `identity_service_user`, `content_service_user`,
+  `assessment_service_user`, `progress_service_user` — each restricted
+  to its own schema.
 
-Status: **DRAFT — do not run `prisma migrate` until the data model is
-reviewed and approved.** The original repository contains no DBML source
-to reconcile against.
+Status: **DRAFT models — reconcile against the approved data model before
+production.**
