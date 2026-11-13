@@ -78,7 +78,7 @@ void main() {
       repo = MockDiscoveryRepo();
     });
 
-    test('Guest discovery batch returns 7-8 Level 4 questions (default: 8)', async () async {
+    test('Guest discovery batch returns 7-8 Level 4 questions (default: 8)', () async {
       final notifier = GuestDiscoveryNotifier(repo);
       await notifier.loadBatch();
 
@@ -87,14 +87,14 @@ void main() {
       expect(notifier.state.items.first.prompt, contains('Level 4 question prompt'));
     });
 
-    test('Guest discovery batch respects 7 items limit', async () {
+    test('Guest discovery batch respects 7 items limit', () async {
       final notifier = GuestDiscoveryNotifier(repo);
       await notifier.loadBatch(limit: 7);
 
       expect(notifier.state.items.length, 7);
     });
 
-    test('Registered discovery batch returns 5-6 Level 4 questions (default: 6)', async () {
+    test('Registered discovery batch returns 5-6 Level 4 questions (default: 6)', () async {
       final notifier = RegisteredDiscoveryNotifier(repo);
       await notifier.loadBatch();
 
@@ -103,14 +103,14 @@ void main() {
       expect(notifier.state.items.first.safeReasonLabel, 'Based on what you selected');
     });
 
-    test('Registered discovery batch respects 5 items limit', async () {
+    test('Registered discovery batch respects 5 items limit', () async {
       final notifier = RegisteredDiscoveryNotifier(repo);
       await notifier.loadBatch(limit: 5);
 
       expect(notifier.state.items.length, 5);
     });
 
-    test('Shuffle preserves visible cards when request fails (immutable batch state)', async () {
+    test('Shuffle preserves visible cards when request fails (immutable batch state)', () async {
       final notifier = GuestDiscoveryNotifier(repo);
       await notifier.loadBatch();
       final initialQuestions = notifier.state.items;
@@ -127,7 +127,7 @@ void main() {
       expect(notifier.state.isShuffling, isFalse);
     });
 
-    test('Shuffle replaces cards with fresh batch on success', async () {
+    test('Shuffle replaces cards with fresh batch on success', () async {
       final notifier = RegisteredDiscoveryNotifier(repo);
       await notifier.loadBatch();
       expect(notifier.state.batchId, 'reg-batch-1');
