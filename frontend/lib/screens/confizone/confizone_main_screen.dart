@@ -297,7 +297,7 @@ class _ConfiZoneMainScreenState extends State<ConfiZoneMainScreen> {
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
-                  final topic = appTopics[index % appTopics.length];
+                  final topic = allTopics[index % allTopics.length];
                   return _TopicTile(
                     topic: topic,
                     onTap: () {
@@ -445,7 +445,7 @@ class _ResourceCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      resource.duration,
+                      resource.duration ?? '',
                       style: AppTypography.body(fontSize: 10, color: AppColors.darkGrey),
                     ),
                   ],

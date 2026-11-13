@@ -61,7 +61,7 @@ class GreetingHeader extends StatelessWidget {
                   const Text('⚡', style: TextStyle(fontSize: 13)),
                   const SizedBox(width: 4),
                   Text(
-                    '${user.streakDays}d focus',
+                    'CL ${user.confiLevel} Focus',
                     style: AppTypography.montserrat(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
