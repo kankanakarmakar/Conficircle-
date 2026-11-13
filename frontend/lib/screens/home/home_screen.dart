@@ -5,6 +5,7 @@ import '../../providers/user_provider.dart';
 import '../../providers/recommendation_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
+import '../../core/widgets/unit_section_banner.dart';
 import 'widgets/greeting_header.dart';
 import 'widgets/current_situation.dart';
 import 'widgets/search_bar_widget.dart';
@@ -18,6 +19,8 @@ import 'widgets/useful_content_section.dart';
 import 'widgets/just_curious_section.dart';
 import 'widgets/because_you_explored.dart';
 import 'widgets/share_earn_section.dart';
+import '../confizone/widgets/category_list_screen.dart';
+import '../../data/taxonomy_data.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -104,6 +107,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTap: () {},
                   ),
 
+                  // Duolingo Unit Header Banner
+                  UnitSectionBanner(
+                    sectionNumber: 'Orientation · Discovery',
+                    title: 'Explore What Matters to You',
+                    subtitle: 'Choose an action below to kickstart your journey',
+                    onGuidebookTap: () {},
+                  ),
+
                   // 3. Six discovery actions + 4. Explore more button
                   const ActionCardGrid(isFirst: true),
 
@@ -149,6 +160,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   SearchBarWidget(
                     hintText: 'What are you looking for today?',
                     onTap: () {},
+                  ),
+
+                  // Duolingo Signature Unit / Section Banner
+                  UnitSectionBanner(
+                    sectionNumber: 'Section 1 · Focus Pillar',
+                    title: 'Build Stronger Me',
+                    subtitle: 'Improving Confidence, Self-Worth & Inner Balance',
+                    onGuidebookTap: () {
+                      final area = TaxonomyData.areas[2]; // BUILD STRONGER ME
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => CategoryListScreen(area: area),
+                        ),
+                      );
+                    },
                   ),
 
                   // 4. Picked for you (6 actions) + 5. Explore more button

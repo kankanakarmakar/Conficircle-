@@ -4,314 +4,261 @@ import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
+import '../../core/widgets/tactile_card.dart';
 import '../assessment/assessment_screen.dart';
 
+/// Profile & Progress Screen (Blueprint §16 / Marvilo Duolingo Profile)
+/// Features 2x2 statistics grid, achievements list with progress bars, and personal records.
 class MeScreen extends StatelessWidget {
   const MeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final user = context.watch<UserProvider>().profile;
+    final int score = user.confiScore > 0 ? user.confiScore.toInt() : 57;
+    final int level = user.confiLevel > 0 ? user.confiLevel : 5;
+    final initial = user.name.isNotEmpty ? user.name[0].toUpperCase() : 'A';
 
     return Scaffold(
-      backgroundColor: AppColors.softGrey,
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 240,
-            pinned: true,
-            backgroundColor: AppColors.blue,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF0F2459), Color(0xFF2258C5)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+      backgroundColor: const Color(0xFFF7F9FC),
+      appBar: AppBar(
+        backgroundColor: AppColors.white,
+        elevation: 0,
+        title: Text(
+          'Profile',
+          style: AppTypography.montserrat(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: AppColors.blue,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, color: AppColors.blue),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Settings opened'), backgroundColor: AppColors.blue),
+              );
+            },
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Profile Card (Marvilo Profile Header)
+            TactileCard(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Stack(
+                    children: [
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: AppColors.blue,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: const Color(0xFFD4E1FB), width: 2.5),
+                        ),
+                        child: Center(
+                          child: Text(
+                            initial,
+                            style: AppTypography.montserrat(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          width: 22,
+                          height: 22,
+                          decoration: const BoxDecoration(
+                            color: AppColors.coral,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.edit, size: 12, color: Colors.white),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
+                  const SizedBox(width: 16),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Avatar + Name
-                        Row(
-                          children: [
-                            Container(
-                              width: 64,
-                              height: 64,
-                              decoration: BoxDecoration(
-                                color: AppColors.coral,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white38, width: 3),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  user.name.isNotEmpty ? user.name[0].toUpperCase() : 'A',
-                                  style: AppTypography.montserrat(
-                                    fontSize: 28, fontWeight: FontWeight.w800, color: AppColors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(user.name.isNotEmpty ? user.name : 'Student',
-                                      style: AppTypography.headingSmall.copyWith(color: AppColors.white)),
-                                  if (user.college != null)
-                                    Text(user.college!,
-                                        style: AppTypography.bodySmall.copyWith(
-                                          color: AppColors.white.withOpacity(0.8),
-                                        )),
-                                  if (user.course != null)
-                                    Text('${user.course} · ${user.yearOfStudy ?? ''}',
-                                        style: AppTypography.bodySmall.copyWith(
-                                          color: AppColors.white.withOpacity(0.7),
-                                        )),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.settings_outlined, color: Colors.white70),
-                              onPressed: () {},
-                            ),
-                          ],
+                        Text(
+                          user.name.isNotEmpty ? user.name : 'Student Member',
+                          style: AppTypography.montserrat(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.black,
+                          ),
                         ),
-                        const SizedBox(height: 20),
-                        // Score row
-                        Row(
-                          children: [
-                            _StatBox(label: 'Confi Score', value: '${user.confiScore.toInt()}'),
-                            const SizedBox(width: 12),
-                            _StatBox(label: 'Confi Level', value: 'CL ${user.confiLevel}'),
-                            const SizedBox(width: 12),
-                            _StatBox(label: 'CP', value: '${user.confiPoints}'),
-                          ],
+                        const SizedBox(height: 2),
+                        Text(
+                          user.college ?? 'Engineering & Management',
+                          style: AppTypography.body(fontSize: 12, color: AppColors.darkGrey),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF5FF),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'Joined Nov 2026',
+                            style: AppTypography.montserrat(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.blue,
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ),
+                ],
               ),
             ),
-          ),
 
-          SliverToBoxAdapter(
-            child: Column(
+            const SizedBox(height: 16),
+
+            // Statistics Header & 2x2 Grid (Marvilo Duolingo Statistics)
+            Text(
+              'Statistics',
+              style: AppTypography.montserrat(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: AppColors.blue,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 1.8,
               children: [
-                const SizedBox(height: 16),
-
-                // Confi Level card
-                _MeSection(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text('🏆', style: const TextStyle(fontSize: 24)),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Confi Level ${user.confiLevel}',
-                                    style: AppTypography.labelLarge),
-                                Text(user.confiLevelName,
-                                    style: AppTypography.bodySmall.copyWith(color: AppColors.coral)),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      // Level progress bar
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: LinearProgressIndicator(
-                          value: (user.confiLevel - 1) / 11,
-                          backgroundColor: AppColors.lightGrey,
-                          valueColor: const AlwaysStoppedAnimation<Color>(AppColors.coral),
-                          minHeight: 8,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('Level 1 — Spark', style: AppTypography.bodySmall),
-                          Text('Level 12 — Legend', style: AppTypography.bodySmall),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Discover My Confi
-                _MeSection(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Assessment', style: AppTypography.headingSmall),
-                      const SizedBox(height: 12),
-                      GestureDetector(
-                        onTap: () => Navigator.push(context, MaterialPageRoute(
-                          builder: (_) => const AssessmentScreen(),
-                        )),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF173883), Color(0xFF4475D7)],
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Row(
-                            children: [
-                              const Text('📊', style: TextStyle(fontSize: 32)),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Discover My Confi',
-                                        style: AppTypography.labelLarge.copyWith(color: AppColors.white)),
-                                    Text('Get your full Confi report',
-                                        style: AppTypography.bodySmall.copyWith(
-                                            color: AppColors.white.withOpacity(0.8))),
-                                  ],
-                                ),
-                              ),
-                              const Icon(Icons.arrow_forward_ios_rounded,
-                                  color: Colors.white70, size: 16),
-                            ],
-                          ),
-                        ),
-                      ),
-                      if (user.hasCompletedAssessment) ...[
-                        const SizedBox(height: 10),
-                        GestureDetector(
-                          onTap: () {},
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: AppColors.coral.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: AppColors.coral.withOpacity(0.3)),
-                            ),
-                            child: Row(
-                              children: [
-                                const Text('📄', style: TextStyle(fontSize: 24)),
-                                const SizedBox(width: 10),
-                                Text('View My Confi Report',
-                                    style: AppTypography.labelLarge.copyWith(color: AppColors.coral)),
-                                const Spacer(),
-                                const Icon(Icons.arrow_forward_ios_rounded,
-                                    color: AppColors.coral, size: 14),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-
-                // Activity summary
-                _MeSection(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('My Activity', style: AppTypography.headingSmall),
-                      const SizedBox(height: 14),
-                      _ActivityRow(emoji: '🎯', label: 'Actions Explored',
-                          value: '${user.clickedActionIds.length}'),
-                      _ActivityRow(emoji: '💾', label: 'Resources Saved',
-                          value: '${user.savedResourceIds.length}'),
-                      _ActivityRow(emoji: '🎓', label: 'Programs Completed',
-                          value: '${user.completedProgramIds.length}'),
-                      _ActivityRow(emoji: '⭐', label: 'Confi Points',
-                          value: '${user.confiPoints}'),
-                    ],
-                  ),
-                ),
-
-                // Demo toggle
-                _MeSection(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Demo', style: AppTypography.headingSmall),
-                      const SizedBox(height: 10),
-                      Text('Switch between new student and existing student views.',
-                          style: AppTypography.bodySmall),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () {
-                                // Reset to first-time user
-                                context.read<UserProvider>().updateProfile(name: 'Anaya');
-                              },
-                              child: const Text('New Student'),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () => context.read<UserProvider>().setExistingStudentDemo(),
-                              child: const Text('Existing Student'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 32),
+                _StatTile(icon: '⚡', label: 'Day streak', value: '5'),
+                _StatTile(icon: '💎', label: 'Total CP', value: '${user.confiPoints}'),
+                _StatTile(icon: '🎯', label: 'ConfiScore', value: '$score'),
+                _StatTile(icon: '🛡️', label: 'Current Level', value: 'CL $level'),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
-class _StatBox extends StatelessWidget {
-  final String label, value;
-  const _StatBox({required this.label, required this.value});
+            const SizedBox(height: 20),
 
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: AppColors.white.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            Text(value,
-                style: AppTypography.montserrat(
-                  fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.white,
-                )),
-            const SizedBox(height: 2),
-            Text(label,
-                textAlign: TextAlign.center,
-                style: AppTypography.montserrat(
-                  fontSize: 10, fontWeight: FontWeight.w500,
-                  color: AppColors.white.withOpacity(0.75),
-                )),
+            // Achievements Section (Marvilo Profile Achievements)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Achievements',
+                  style: AppTypography.montserrat(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.blue,
+                  ),
+                ),
+                Text(
+                  'View all',
+                  style: AppTypography.montserrat(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.coral,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            _AchievementCard(
+              badgeEmoji: '🔥',
+              badgeColor: const Color(0xFFFF9600),
+              title: 'Wildfire',
+              subtitle: 'Reach a 7-day focus streak',
+              progress: 5 / 7,
+              progressLabel: '5/7',
+            ),
+            const SizedBox(height: 10),
+            _AchievementCard(
+              badgeEmoji: '🏆',
+              badgeColor: const Color(0xFF58CC02),
+              title: 'Pioneer',
+              subtitle: 'Earn 500 ConfiPoints across activities',
+              progress: (user.confiPoints / 500).clamp(0.0, 1.0),
+              progressLabel: '${user.confiPoints}/500',
+            ),
+            const SizedBox(height: 10),
+            _AchievementCard(
+              badgeEmoji: '📚',
+              badgeColor: AppColors.blue,
+              title: 'Scholar',
+              subtitle: 'Complete 5 diagnostic check-ins',
+              progress: 2 / 5,
+              progressLabel: '2/5',
+            ),
+
+            const SizedBox(height: 24),
+
+            // Diagnostic Trigger Action
+            TactileCard(
+              backgroundColor: const Color(0xFFEFF5FF),
+              borderColor: const Color(0xFFD4E1FB),
+              bevelColor: const Color(0xFFBDD4FA),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const AssessmentScreen()),
+                );
+              },
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.blue,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.insights_rounded, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Retake Diagnostic Assessment',
+                          style: AppTypography.montserrat(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.blue,
+                          ),
+                        ),
+                        Text(
+                          'Refresh your radar & calibrate Level',
+                          style: AppTypography.body(fontSize: 11, color: AppColors.darkGrey),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.blue),
+                ],
+              ),
+            ),
+            const SizedBox(height: 36),
           ],
         ),
       ),
@@ -319,48 +266,126 @@ class _StatBox extends StatelessWidget {
   }
 }
 
-class _MeSection extends StatelessWidget {
-  final Widget child;
-  const _MeSection({required this.child});
+class _StatTile extends StatelessWidget {
+  final String icon;
+  final String label;
+  final String value;
+
+  const _StatTile({required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return TactileCard(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 22)),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                value,
+                style: AppTypography.montserrat(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.black,
+                ),
+              ),
+              Text(
+                label,
+                style: AppTypography.body(
+                  fontSize: 10,
+                  color: AppColors.darkGrey,
+                ),
+              ),
+            ],
           ),
         ],
       ),
-      child: child,
     );
   }
 }
 
-class _ActivityRow extends StatelessWidget {
-  final String emoji, label, value;
-  const _ActivityRow({required this.emoji, required this.label, required this.value});
+class _AchievementCard extends StatelessWidget {
+  final String badgeEmoji;
+  final Color badgeColor;
+  final String title;
+  final String subtitle;
+  final double progress;
+  final String progressLabel;
+
+  const _AchievementCard({
+    required this.badgeEmoji,
+    required this.badgeColor,
+    required this.title,
+    required this.subtitle,
+    required this.progress,
+    required this.progressLabel,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+    return TactileCard(
+      padding: const EdgeInsets.all(12),
       child: Row(
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 20)),
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: badgeColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: badgeColor.withOpacity(0.3), width: 1.5),
+            ),
+            alignment: Alignment.center,
+            child: Text(badgeEmoji, style: const TextStyle(fontSize: 22)),
+          ),
           const SizedBox(width: 12),
-          Expanded(child: Text(label, style: AppTypography.bodyLarge)),
-          Text(value,
-              style: AppTypography.montserrat(
-                fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.coral,
-              )),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTypography.montserrat(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.black,
+                      ),
+                    ),
+                    Text(
+                      progressLabel,
+                      style: AppTypography.montserrat(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.darkGrey,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: AppTypography.body(fontSize: 10.5, color: AppColors.darkGrey),
+                ),
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 6,
+                    backgroundColor: const Color(0xFFE4E8F0),
+                    valueColor: AlwaysStoppedAnimation<Color>(badgeColor),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

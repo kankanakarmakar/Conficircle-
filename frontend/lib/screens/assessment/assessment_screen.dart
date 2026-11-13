@@ -4,8 +4,14 @@ import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
+import '../../core/widgets/tactile_button.dart';
+import '../../core/widgets/tactile_option_card.dart';
+import '../../core/widgets/feedback_drawer.dart';
 import 'assessment_result_screen.dart';
 
+/// Full-Screen Diagnostic Assessment Flow (Blueprint §10 / Marvilo Lessons)
+/// Replicates Duolingo's question canvas, linear progress, tactile choice cards,
+/// and instant feedback drawer.
 class AssessmentScreen extends StatefulWidget {
   const AssessmentScreen({super.key});
 
@@ -15,173 +21,249 @@ class AssessmentScreen extends StatefulWidget {
 
 class _AssessmentScreenState extends State<AssessmentScreen> {
   int _currentQ = 0;
+  int? _selectedOption;
+  bool _showFeedback = false;
   final Map<int, int> _answers = {};
 
   final List<Map<String, dynamic>> _questions = [
     {
-      'question': 'How clear are you about what you want to do after college?',
-      'category': 'Career Clarity',
-      'options': ['Very unclear', 'Somewhat unclear', 'Somewhat clear', 'Very clear'],
+      'category': 'CAREER CLARITY',
+      'question': 'How clear are you about your direction after graduation?',
+      'options': [
+        'Completely uncertain — exploring everything',
+        'Have a few ideas, but no concrete plan',
+        'Fairly clear on my target roles & industry',
+        'Crystal clear with specific target roadmap',
+      ],
+      'feedback': 'Reflecting on your clarity helps tailor relevant opportunities.',
     },
     {
-      'question': 'How confident do you feel when speaking in front of others?',
-      'category': 'Confidence',
-      'options': ['Very low', 'Below average', 'Average', 'High'],
+      'category': 'CONFIDENCE & SELF-WORTH',
+      'question': 'How confident do you feel pitching your ideas or speaking in groups?',
+      'options': [
+        'Anxious — I avoid speaking up when possible',
+        'Somewhat hesitant, but push through',
+        'Generally confident in familiar topics',
+        'Highly confident and articulate in public',
+      ],
+      'feedback': 'Building voice presence is a compounding skill.',
     },
     {
-      'question': 'How well can you manage your time and stay productive?',
-      'category': 'Personal Effectiveness',
-      'options': ['Struggle a lot', 'Sometimes manage', 'Mostly manage', 'Excellent'],
+      'category': 'PERSONAL EFFECTIVENESS',
+      'question': 'How consistently do you stick to daily study and personal habits?',
+      'options': [
+        'Struggle with procrastination and focus',
+        'Inconsistent — depends heavily on mood',
+        'Steady routine during exam seasons',
+        'Disciplined daily calendar and habit loops',
+      ],
+      'feedback': 'Micro-habits reduce willpower friction dramatically.',
     },
     {
-      'question': 'How comfortable are you having difficult conversations?',
-      'category': 'Communication',
-      'options': ['Very uncomfortable', 'Somewhat uncomfortable', 'Comfortable', 'Very comfortable'],
+      'category': 'FINANCIAL GROWTH',
+      'question': 'How familiar are you with managing money and student investments?',
+      'options': [
+        'Never learned about personal finance',
+        'Understand basic budgeting and savings',
+        'Familiar with compound interest & SIPs',
+        'Actively investing and tracking finances',
+      ],
+      'feedback': 'Financial literacy early compounds into true independence.',
     },
     {
-      'question': 'How often do you feel stressed or overwhelmed by daily life?',
-      'category': 'Wellbeing',
-      'options': ['Almost always', 'Often', 'Sometimes', 'Rarely'],
+      'category': 'EMOTIONAL BALANCE',
+      'question': 'How do you typically navigate unexpected setbacks or failure?',
+      'options': [
+        'Overwhelmed — tends to derail me for days',
+        'Takes time to recover and process emotions',
+        'Bounce back with support from friends',
+        'View setbacks as high-leverage feedback',
+      ],
+      'feedback': 'Resilience is learned through gradual exposure.',
     },
   ];
 
-  bool get _isComplete => _currentQ >= _questions.length;
+  double get _progress => (_currentQ + 1) / _questions.length;
 
-  double get _progress => _currentQ / _questions.length;
+  void _onOptionChosen(int index) {
+    if (_showFeedback) return;
+    setState(() => _selectedOption = index);
+  }
 
-  void _selectAnswer(int optionIndex) {
+  void _onCheckAnswer() {
+    if (_selectedOption == null) return;
     setState(() {
-      _answers[_currentQ] = optionIndex;
+      _answers[_currentQ] = _selectedOption!;
+      _showFeedback = true;
     });
-    Future.delayed(const Duration(milliseconds: 300), () {
-      setState(() {
+  }
+
+  void _onNextQuestion() {
+    setState(() {
+      _showFeedback = false;
+      _selectedOption = null;
+      if (_currentQ < _questions.length - 1) {
         _currentQ++;
-      });
-      if (_isComplete) {
-        _calculateAndSubmit();
+      } else {
+        _submitAndFinish();
       }
     });
   }
 
-  void _calculateAndSubmit() {
+  void _submitAndFinish() {
     final total = _answers.values.fold(0, (a, b) => a + b);
-    final maxTotal = (_questions.length - 1) * 4;
-    final score = (total / maxTotal) * 100;
-    final level = (score / 10).ceil().clamp(1, 12);
-    context.read<UserProvider>().completeAssessment(score: score, level: level);
-    // Navigate to dedicated result screen
-    Navigator.pushReplacement(
-      context,
+    final score = ((total / (_questions.length * 3)) * 100).clamp(30.0, 95.0);
+    final level = (score / 15).ceil().clamp(1, 8);
+
+    final userProvider = context.read<UserProvider>();
+    userProvider.completeAssessment(score: score, level: level);
+
+    Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => AssessmentResultScreen(score: score, level: level),
+        builder: (_) => AssessmentResultScreen(
+          score: score,
+          level: level,
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final qData = _questions[_currentQ];
+    final options = qData['options'] as List<String>;
+
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: AppBar(
-        backgroundColor: AppColors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.blue),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text('Basic Confi Assessment', style: AppTypography.labelLarge),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(4),
-          child: LinearProgressIndicator(
-            value: _progress,
-            backgroundColor: AppColors.lightGrey,
-            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.coral),
-            minHeight: 4,
-          ),
-        ),
-      ),
-      body: _isComplete
-          ? const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Duolingo Lesson Top Bar
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Row(
                 children: [
-                  CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.coral),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 24, color: AppColors.darkGrey),
+                    onPressed: () => Navigator.of(context).pop(),
                   ),
-                  SizedBox(height: 20),
-                  Text('Calculating your results...',
-                      style: TextStyle(color: AppColors.darkGrey)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: _progress,
+                        minHeight: 12,
+                        backgroundColor: const Color(0xFFE4E8F0),
+                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF58CC02)), // Duolingo green
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.softGrey,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFE4E8F0)),
+                    ),
+                    child: Text(
+                      '${_currentQ + 1}/${_questions.length}',
+                      style: AppTypography.montserrat(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.blue,
+                      ),
+                    ),
+                  ),
                 ],
               ),
-            )
-          : _buildQuestion(),
-    );
-  }
+            ),
 
-  Widget _buildQuestion() {
-    final q = _questions[_currentQ];
-    final options = q['options'] as List<String>;
+            const SizedBox(height: 12),
 
-    return Padding(
-      padding: const EdgeInsets.all(28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 16),
-          Text('Question ${_currentQ + 1} of ${_questions.length}',
-              style: AppTypography.bodySmall.copyWith(color: AppColors.coral)),
-          const SizedBox(height: 8),
-          Text(q['category'] as String,
-              style: AppTypography.montserrat(
-                fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.lightBlue,
-              )),
-          const SizedBox(height: 12),
-          Text(q['question'] as String, style: AppTypography.headingSmall),
-          const SizedBox(height: 32),
-          ...options.asMap().entries.map((entry) {
-            final i = entry.key;
-            final opt = entry.value;
-            final isSelected = _answers[_currentQ] == i;
-            return GestureDetector(
-              onTap: () => _selectAnswer(i),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppColors.coral : AppColors.softGrey,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isSelected ? AppColors.coral : AppColors.lightGrey,
-                    width: 2,
-                  ),
-                ),
-                child: Row(
+            // Question Content Area
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Category Badge Pill
                     Container(
-                      width: 24,
-                      height: 24,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isSelected ? AppColors.white : AppColors.lightGrey,
+                        color: AppColors.blue.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.blue.withOpacity(0.2)),
                       ),
-                      child: isSelected
-                          ? const Icon(Icons.check, size: 14, color: AppColors.coral)
-                          : null,
+                      child: Text(
+                        qData['category'] as String,
+                        style: AppTypography.montserrat(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.blue,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
                     ),
-                    const SizedBox(width: 14),
-                    Text(opt,
-                        style: AppTypography.labelLarge.copyWith(
-                          color: isSelected ? AppColors.white : AppColors.blue,
-                        )),
+                    const SizedBox(height: 14),
+
+                    // Big Prompt Header
+                    Text(
+                      qData['question'] as String,
+                      style: AppTypography.montserrat(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.blue,
+                        height: 1.3,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Tactile Option Cards
+                    ...List.generate(options.length, (i) {
+                      final isSelected = _selectedOption == i;
+                      return TactileOptionCard(
+                        label: options[i],
+                        isSelected: isSelected,
+                        onSelect: () => _onOptionChosen(i),
+                      );
+                    }),
                   ],
                 ),
               ),
-            );
-          }),
-        ],
+            ),
+
+            // Bottom Action Area / Feedback Drawer
+            if (_showFeedback)
+              FeedbackDrawer(
+                title: 'Reflection Logged!',
+                subtitle: qData['feedback'] as String,
+                isSuccess: true,
+                buttonLabel: _currentQ == _questions.length - 1 ? 'SEE MY RADAR' : 'CONTINUE',
+                onContinue: _onNextQuestion,
+              )
+            else
+              Container(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                decoration: const BoxDecoration(
+                  color: AppColors.white,
+                  border: Border(top: BorderSide(color: Color(0xFFE4E8F0), width: 2)),
+                ),
+                child: TactileButton(
+                  label: 'CHECK',
+                  backgroundColor: _selectedOption != null ? const Color(0xFF58CC02) : const Color(0xFFE4E8F0),
+                  shadowColor: _selectedOption != null ? const Color(0xFF46A302) : const Color(0xFFD0D7E5),
+                  textColor: _selectedOption != null ? Colors.white : AppColors.darkGrey,
+                  onPressed: _selectedOption != null ? _onCheckAnswer : null,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 }
-
