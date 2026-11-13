@@ -8,3 +8,13 @@ allowBuilds:
   '@scarf/scarf': true
   prisma: true
 dangerouslyAllowAllBuilds: true
+
+# Dependency build-script allowlist (pnpm >=10 reads this here, not package.json)
+onlyBuiltDependencies:
+  - "@prisma/client"
+  - "@prisma/engines"
+  - "prisma"
+
+# Prisma CLI requires @prisma/client + prisma to resolve as siblings in a
+# hoisted node_modules; pnpm's symlinked store breaks that resolution.
+nodeLinker: hoisted

@@ -3,7 +3,10 @@ dist/
 coverage/
 *.tsbuildinfo
 
-.env
+# Generated per-service Prisma clients (pnpm db:generate)
+apps/*/src/generated/
+
+/.env
 .env.local
 .env.*.local
 

@@ -6,13 +6,6 @@
   "engines": {
     "node": ">=20"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@prisma/client",
-      "@prisma/engines",
-      "prisma"
-    ]
-  },
   "scripts": {
     "build": "pnpm -r build",
     "build:gateway": "pnpm --filter @conficircle/api-gateway build",
@@ -23,11 +16,18 @@
     "start": "pnpm -r --parallel start",
     "test": "pnpm -r test",
     "prisma:validate": "pnpm -r --filter ./apps/* prisma:validate",
+    "db:generate": "dotenv -e .env -- pnpm -r --filter @conficircle/identity-service --filter @conficircle/content-service --filter @conficircle/assessment-service --filter @conficircle/progress-service prisma:generate",
+    "db:migrate:identity": "pnpm --filter @conficircle/identity-service db:migrate",
+    "db:migrate:content": "pnpm --filter @conficircle/content-service db:migrate",
+    "db:migrate:assessment": "pnpm --filter @conficircle/assessment-service db:migrate",
+    "db:migrate:progress": "pnpm --filter @conficircle/progress-service db:migrate",
+    "db:migrate:all": "pnpm db:migrate:identity && pnpm db:migrate:content && pnpm db:migrate:assessment && pnpm db:migrate:progress",
     "infra:up": "docker compose up -d",
     "infra:down": "docker compose down",
     "infra:logs": "docker compose logs -f"
   },
   "devDependencies": {
+    "@prisma/client": "6.2.1",
     "@types/jest": "29.5.14",
     "@types/node": "20.17.9",
     "dotenv-cli": "7.4.0",

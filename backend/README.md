@@ -18,9 +18,16 @@ pnpm install
 # 3. Start local infrastructure (PostgreSQL, Redis, RabbitMQ)
 docker compose up -d
 docker compose ps                    # wait until all three are healthy
+./scripts/init-schemas.sh            # schemas + service roles (idempotent; only
+                                     # needed on volumes created before the
+                                     # single-database architecture)
 
 # 4. Build everything
 pnpm build
+
+# 4b. Generate Prisma clients + apply migrations (shared conficircle_db)
+pnpm db:generate
+pnpm db:migrate:all
 
 # 5. Run each service (different terminals, or `pnpm start` for all)
 PORT=3000 pnpm --filter @conficircle/api-gateway start            # gateway  (swagger at /docs)
@@ -42,10 +49,10 @@ pnpm test
 backend/
   apps/
     api-gateway/         # single external entry point, swagger at /docs
-    identity-service/    # auth, sessions, guest identity (own DB)
-    content-service/     # topics, questions, tips, videos (own DB)
-    assessment-service/  # assessments, attempts, server-side scoring (own DB)
-    progress-service/    # activity, video/topic progress, analytics (own DB)
+    identity-service/    # auth, sessions, guest identity (identity schema)
+    content-service/     # topics, questions, tips, videos (content schema)
+    assessment-service/  # assessments, attempts, server-side scoring (assessment schema)
+    progress-service/    # activity, video/topic progress, analytics (progress schema)
   packages/
     contracts/           # cross-service DTO/API types
     event-schemas/       # RabbitMQ event envelopes + payloads
@@ -69,8 +76,8 @@ backend/
 | Language         | TypeScript 5.6                      |
 | Framework        | NestJS 10                           |
 | Package manager  | pnpm 12 (workspace)                 |
-| Databases        | PostgreSQL 16 (4 logical DBs)       |
-| ORM              | Prisma 6 (per-service client)       |
+| Database         | PostgreSQL 16 — ONE shared `conficircle_db` with per-service **schemas** (identity / content / assessment / progress) |
+| ORM              | Prisma 6 (per-service client + own migration history) |
 | Cache/coordination | Redis 7                           |
 | Message broker   | RabbitMQ 3.13 (topic exchange)      |
 | Auth (foundation)| JWT + refresh rotation, bcrypt      |
@@ -87,6 +94,9 @@ backend/
 | Build one app                 | `pnpm build:gateway` (`build:identity`, …) |
 | Run tests                     | `pnpm test` |
 | Validate all Prisma schemas   | `pnpm -r prisma:validate` |
+| Generate Prisma clients       | `pnpm db:generate` |
+| Apply migrations (per service)| `pnpm db:migrate:identity` / `db:migrate:content` / `db:migrate:assessment` / `db:migrate:progress` |
+| Apply all migrations          | `pnpm db:migrate:all` |
 | Start infra                   | `docker compose up -d` |
 | Stop infra (keep data)        | `docker compose down` |
 | Stop infra + wipe data        | `docker compose down -v` |
@@ -97,7 +107,11 @@ backend/
 
 - **No production migrations yet.** Prisma schemas are DRAFT (no original
   DBML was found in the repo — see `docs/decisions/0001-sourcing-models.md`).
-  Do not run `prisma migrate` until the data model is approved.
+  Initial dev migrations exist under each service's `prisma/migrations/`.
+- **Single shared database** since 2026-11-12: `conficircle_db` with
+  schema isolation (identity/content/assessment/progress) — see
+  `docs/decisions/0002-single-database-migration.md` and
+  `docs/database/setup.md`.
 - Development host ports are non-standard (14332 / 16379 / 56780 / 15690)
   because this workstation already occupies the defaults. Adjust in `.env`.
 - Never commit real secrets; `.gitignore` excludes `.env`.

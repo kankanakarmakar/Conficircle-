@@ -13,18 +13,25 @@
 // ==========================================================================
 
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
+  output     = "../src/generated/prisma-client"
+  // multiSchema is stable in usage but still a preview flag on Prisma 6.2.x
+  previewFeatures = ["multiSchema"]
 }
 
 enum DifficultyLevel {
   beginner
   intermediate
   advanced
+  @@schema("assessment")
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("ASSESSMENT_DATABASE_URL")
+  // Shared single database (conficircle_db); this service only owns
+  // the "assessment" PostgreSQL schema inside it.
+  url      = env("DATABASE_URL")
+  schemas  = ["assessment"]
 }
 
 model Assessment {
@@ -40,6 +47,7 @@ model Assessment {
   attempts  AssessmentAttempt[]
 
   @@index([isPublished])
+  @@schema("assessment")
 }
 
 model AssessmentQuestion {
@@ -53,6 +61,7 @@ model AssessmentQuestion {
   responses  AttemptResponse[]
 
   @@index([assessmentId, orderIndex])
+  @@schema("assessment")
 }
 
 model AssessmentOption {
@@ -66,6 +75,7 @@ model AssessmentOption {
   question AssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@index([questionId, orderIndex])
+  @@schema("assessment")
 }
 
 model AssessmentAttempt {
@@ -82,6 +92,7 @@ model AssessmentAttempt {
 
   @@index([userId, assessmentId])
   @@unique([userId, assessmentId, startedAt])
+  @@schema("assessment")
 }
 
 model AttemptResponse {
@@ -95,6 +106,7 @@ model AttemptResponse {
   question AssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@index([attemptId])
+  @@schema("assessment")
 }
 
 // Transactional outbox (Phase 6) — assessment-completed events are
@@ -111,4 +123,5 @@ model OutboxEvent {
   attempt AssessmentAttempt @relation(fields: [attemptId], references: [id])
 
   @@index([processedAt])
+  @@schema("assessment")
 }
