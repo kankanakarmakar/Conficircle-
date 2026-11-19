@@ -34,6 +34,7 @@
     "@types/supertest": "6.0.2",
     "supertest": "7.0.0",
     "@types/bcryptjs": "2.4.6",
-    "@nestjs/testing": "10.4.15"
+    "@nestjs/testing": "10.4.15",
+    "prisma": "6.2.1"
   }
 }
